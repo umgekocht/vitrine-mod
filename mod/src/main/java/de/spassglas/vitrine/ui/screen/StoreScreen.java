@@ -148,6 +148,8 @@ public final class StoreScreen extends Screen {
 	private TileRowWidget popularRow;
 	private TileRowWidget startRow;
 	private TileRowWidget libraryRow;
+	/** ROADMAP GATE73 (docs/UI-SPEC.md "3. Start": Reihe "Deine Updates", nur wenn es welche gibt). */
+	private TileRowWidget updatesRow;
 	private TileRowWidget searchRow;
 	private ButtonWidget navToggleButton;
 	private ButtonWidget backButton;
@@ -563,6 +565,7 @@ public final class StoreScreen extends Screen {
 		popularRow = null;
 		startRow = null;
 		libraryRow = null;
+		updatesRow = null;
 		catalogStateView = null;
 		if (selectedEntry != NavRailEntry.START || navController.isOverlayOpen()
 				|| searchController.hasActiveSearch()) {
@@ -625,6 +628,7 @@ public final class StoreScreen extends Screen {
 			// unconditioned auf den Katalog-Zustand (auch das Lade-Skeleton
 			// ohne Knopf waehrend des 15s-Netz-Timeouts, CatalogEndpoints.java:49).
 			int rowY = localLibraryRowTopY(catalogStateView, y, hasCachedCatalogRow);
+			rowY = buildUpdatesRow(x, rowY, rowWidth);
 			buildLocalLibraryRow(x, rowY, rowWidth);
 			return;
 		}
@@ -632,6 +636,7 @@ public final class StoreScreen extends Screen {
 		// Microsoft-Store-Aufbau (umgekocht, 2026-10-07): Banner, zwei Trending-Panels,
 		// Modrinth-Regal, Vitrine-Regal, Collections, darunter die eigene Bibliothek.
 		int rowsY = buildHome(x, y, rowWidth);
+		rowsY = buildUpdatesRow(x, rowsY, rowWidth);
 		buildLocalLibraryRow(x, rowsY, rowWidth);
 	}
 
@@ -1024,7 +1029,49 @@ public final class StoreScreen extends Screen {
 		libraryRow.setReduceMotion(reduceMotion());
 		libraryRow.setOnTileActivated(tile -> openDetail(tile, localOffers));
 		libraryRow.setOnTileDownload(tile -> installFromTile(() -> openDetail(tile, localOffers)));
+		// ROADMAP GATE73 (docs/UI-SPEC.md "3. Start": "Alle anzeigen ›" rechts
+		// je Reihe) -- echtes Ziel ist die Bibliothek, dort steht jedes dieser
+		// Pakete ohnehin vollstaendig.
+		libraryRow.setOnSeeAll(() -> onNavEntrySelected(NavRailEntry.LIBRARY));
 		this.addDrawableChild(libraryRow);
+	}
+
+	/**
+	 * ROADMAP GATE73 (docs/UI-SPEC.md "3. Start": Reihe "Deine Updates", nur
+	 * wenn es welche gibt): reine Filterung, ohne Minecraft-Klasse, damit sie
+	 * ohne laufenden Client beweisbar ist -- {@code StoreScreen} selbst laesst
+	 * sich wie die anderen Reihen nicht aufbauen/rendern (siehe {@code
+	 * StoreScreenLocalLibraryRowTest}).
+	 */
+	static List<TileData> updateOffers(List<TileData> localOffers) {
+		List<TileData> result = new ArrayList<>();
+		for (TileData tile : localOffers) {
+			if (tile.status() == de.spassglas.vitrine.ui.tile.TileStatus.UPDATE_AVAILABLE) {
+				result.add(tile);
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	/**
+	 * Baut die Reihe "Deine Updates" an {@code (x, y)} -- nur installierte
+	 * Pakete, fuer die {@link #readLocalLibraryOffers()} bereits eine neuere
+	 * Version erkannt hat (GATE80). Leeres Ergebnis -> keine Reihe, {@code y}
+	 * bleibt unveraendert (Charter-Regel 2: keine Reihe ohne echten Inhalt).
+	 */
+	private int buildUpdatesRow(int x, int y, int rowWidth) {
+		List<TileData> updates = updateOffers(readLocalLibraryOffers());
+		if (updates.isEmpty()) {
+			return y;
+		}
+		updatesRow = new TileRowWidget(x, y, rowWidth, updates, this.textRenderer,
+				"vitrine.row.updates.title", "vitrine.row.updates.subtitle");
+		updatesRow.setReduceMotion(reduceMotion());
+		updatesRow.setOnTileActivated(tile -> openDetail(tile, updates));
+		updatesRow.setOnTileDownload(tile -> installFromTile(() -> openDetail(tile, updates)));
+		updatesRow.setOnSeeAll(() -> onNavEntrySelected(NavRailEntry.LIBRARY));
+		this.addDrawableChild(updatesRow);
+		return y + TileRowWidget.preferredHeight() + VitrineTheme.SPACE_GUTTER;
 	}
 
 	/**

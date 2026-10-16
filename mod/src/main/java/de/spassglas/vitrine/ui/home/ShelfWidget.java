@@ -39,7 +39,9 @@ public final class ShelfWidget extends HomeWidget {
 	protected void draw(DrawContext context, float delta) {
 		int x = getX();
 		int y = getY();
-		heading(context, title, x, y, onMore);
+		// "Alle anzeigen ›" endet vor den Blaetter-Pfeilen (x+width-48..x+width),
+		// sonst ueberlappen sich beide Trefferflaechen.
+		heading(context, title, x, y, x + getWidth() - 56, onMore);
 		int perPage = Math.max(1, (getWidth() + GAP) / (CARD_W + GAP));
 		int pages = Math.max(1, (items.size() + perPage - 1) / perPage);
 		page = Math.min(page, pages - 1);

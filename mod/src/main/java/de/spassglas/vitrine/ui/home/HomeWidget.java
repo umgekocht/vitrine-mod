@@ -29,7 +29,6 @@ public abstract class HomeWidget extends ClickableWidget {
 	public static final int RADIUS = 10;
 	public static final int PANEL_COLOR = 0xFF2A2C33;
 	public static final int PANEL_HOVER = 0xFF2E323B;
-	protected static final Identifier ICON_ARROW = Identifier.of("vitrine", "textures/gui/icons/ui_arrow_right_small.png");
 	protected static final Identifier ICON_SPINNER = Identifier.of("vitrine", "textures/gui/icons/ui_spinner.png");
 	protected static final Identifier ICON_RESTART = Identifier.of("vitrine", "textures/gui/icons/ui_restart.png");
 	protected static final Identifier ICON_CHECK = Identifier.of("vitrine", "textures/gui/icons/ui_check.png");
@@ -185,21 +184,25 @@ public abstract class HomeWidget extends ClickableWidget {
 		}
 	}
 
-	/** Ueberschrift "Titel >" wie im Microsoft Store; Klick auf den Titel = {@code onMore}. */
-	protected void heading(DrawContext context, Text title, int x, int y, Runnable onMore) {
+	/**
+	 * Ueberschrift "Titel" plus -- sofern ein echtes Ziel dahinter steht --
+	 * rechtsbuendiger Textlink "Alle anzeigen ›" bis {@code rightEdge}
+	 * (ROADMAP GATE73, docs/UI-SPEC.md "3. Start": "Alle anzeigen ›" rechts).
+	 * Vorher stand dort nur ein Pfeil-Symbol ohne Klartext.
+	 */
+	protected void heading(DrawContext context, Text title, int x, int y, int rightEdge, Runnable onMore) {
 		int size = VitrineTheme.TYPE_TITLE;
-		int w = ScaledText.width(textRenderer, title.getString(), size);
-		boolean over = onMore != null && hovered(x, y, w + 16, size + 4);
 		ScaledText.draw(context, textRenderer, ScaledText.bold(title), x, y, ActiveThemeColors.text(), size);
 		if (onMore != null) {
-			int as = size * 2 / 3;
-			GuiBlend.on();
-			if (over) {
-				context.setShaderColor(0.45f, 0.62f, 0.98f, 1f);
-			}
-			context.drawTexture(ICON_ARROW, x + w + 6, y + (size - as) / 2 + 1, 0, 0, as, as, as, as);
-			context.setShaderColor(1f, 1f, 1f, 1f);
-			region(x, y, w + 16, size + 4, onMore);
+			Text seeAll = Text.translatable("vitrine.row.see_all");
+			int bodySize = VitrineTheme.TYPE_BODY;
+			int tw = ScaledText.width(textRenderer, seeAll.getString(), bodySize);
+			int lx = rightEdge - tw;
+			int ly = y + (size - bodySize) / 2;
+			boolean over = hovered(lx - 6, ly - 3, tw + 12, bodySize + 6);
+			ScaledText.draw(context, textRenderer, seeAll, lx, ly,
+					over ? ActiveThemeColors.accent() : ActiveThemeColors.textMuted(), bodySize);
+			region(lx - 6, ly - 3, tw + 12, bodySize + 6, onMore);
 		}
 	}
 

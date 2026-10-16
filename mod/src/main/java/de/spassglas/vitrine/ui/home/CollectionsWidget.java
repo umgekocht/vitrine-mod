@@ -39,7 +39,7 @@ public final class CollectionsWidget extends HomeWidget {
 
 	@Override
 	protected void draw(DrawContext context, float delta) {
-		heading(context, Text.translatable("vitrine.home.collections"), getX(), getY(), null);
+		heading(context, Text.translatable("vitrine.home.collections"), getX(), getY(), getX() + getWidth(), null);
 		int gap = 12;
 		int cardW = (getWidth() - (PER_ROW - 1) * gap) / PER_ROW;
 		int cardH = cardH(getWidth());

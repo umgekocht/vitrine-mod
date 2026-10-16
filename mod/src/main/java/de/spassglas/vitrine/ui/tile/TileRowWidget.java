@@ -79,6 +79,15 @@ public final class TileRowWidget extends ClickableWidget {
 	private Consumer<TileData> onTileDownload;
 	private static final int GET_W = 54;
 	private static final int GET_H = 18;
+	/**
+	 * ROADMAP GATE73 (docs/UI-SPEC.md "3. Start": "Alle anzeigen ›" rechts je
+	 * Reihe) -- {@code null}, solange die Reihe kein echtes Ziel dafuer hat
+	 * (Charter-Regel 2: kein Knopf ohne Wirkung). Breite/Hoehe der Trefferflaeche
+	 * sind wie {@link #GET_W}/{@link #GET_H} bewusst feste Pixelwerte fuer diese
+	 * eine kleine Kopfzeilen-Trefferflaeche, kein Textmass-abhaengiges Layout.
+	 */
+	private Runnable onSeeAll;
+	private static final int SEE_ALL_W = 108;
 
 	/** ROADMAP S9: Schalter "Animationen reduzieren" -- schaltet die Ueberfahren-Anhebung auf sofort. */
 	private boolean reduceMotion;
@@ -153,6 +162,28 @@ public final class TileRowWidget extends ClickableWidget {
 
 	public void setOnTileActivated(Consumer<TileData> onTileActivated) {
 		this.onTileActivated = onTileActivated;
+	}
+
+	/**
+	 * ROADMAP GATE73: Rueckruf fuer den Link "Alle anzeigen ›" am rechten Rand
+	 * des Reihenkopfs. {@code null} (Default) zeigt den Link gar nicht --
+	 * besser keine Zeile als eine, die auf nichts fuehrt.
+	 */
+	public void setOnSeeAll(Runnable onSeeAll) {
+		this.onSeeAll = onSeeAll;
+	}
+
+	/** Trefferflaeche des "Alle anzeigen ›"-Links: x, y, Breite, Hoehe. */
+	private int[] seeAllRect() {
+		return new int[] {getRight() - SEE_ALL_W, getY(), SEE_ALL_W, VitrineTheme.ROW_HEADER_HEIGHT};
+	}
+
+	private boolean insideSeeAll(double mouseX, double mouseY) {
+		if (onSeeAll == null) {
+			return false;
+		}
+		int[] r = seeAllRect();
+		return mouseX >= r[0] && mouseX < r[0] + r[2] && mouseY >= r[1] && mouseY < r[1] + r[3];
 	}
 
 	/** ROADMAP S9: uebernimmt den Schalter "Animationen reduzieren" (docs/UI-SPEC.md "Bewegung"). */
@@ -243,6 +274,21 @@ public final class TileRowWidget extends ClickableWidget {
 		ScaledText.draw(context, textRenderer, Text.translatable(subtitleKey),
 				getX(), getY() + VitrineTheme.TYPE_TITLE + VitrineTheme.CARD_TEXT_LINE_GAP,
 				ActiveThemeColors.textMuted(), VitrineTheme.TYPE_BODY);
+		if (onSeeAll != null) {
+			renderSeeAll(context);
+		}
+	}
+
+	/** ROADMAP GATE73: Textlink "Alle anzeigen ›" rechtsbuendig im Reihenkopf. */
+	private void renderSeeAll(DrawContext context) {
+		int[] r = seeAllRect();
+		boolean over = insideSeeAll(lastMouseX, lastMouseY);
+		Text label = Text.translatable("vitrine.row.see_all");
+		int tw = ScaledText.width(textRenderer, label.getString(), VitrineTheme.TYPE_BODY);
+		int tx = r[0] + r[2] - tw;
+		int ty = r[1] + (VitrineTheme.TYPE_TITLE - VitrineTheme.TYPE_BODY) / 2;
+		ScaledText.draw(context, textRenderer, label, tx, ty,
+				over ? ActiveThemeColors.accent() : ActiveThemeColors.textMuted(), VitrineTheme.TYPE_BODY);
 	}
 
 	private void renderCard(DrawContext context, TileData tile, int cardX, int cardTop, boolean tileHovered) {
@@ -387,6 +433,10 @@ public final class TileRowWidget extends ClickableWidget {
 	@Override
 	public void onClick(double mouseX, double mouseY) {
 		pressedTileId = null;
+		if (insideSeeAll(mouseX, mouseY)) {
+			onSeeAll.run();
+			return;
+		}
 		if (controller.showLeftChevron() && inLeftChevronZone(mouseX, mouseY)) {
 			controller.scrollByChevron(-1);
 			return;

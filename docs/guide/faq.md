@@ -9,8 +9,8 @@ No. Vitrine is client-only. Data packs from the store go into your currently
 open single-player world (or a LAN world you host).
 
 **Which Minecraft versions are supported?**
-1.21.1 with Fabric right now. Further 1.21.x versions are next. Versions older
-than 1.14 cannot run Fabric mods, so they are not planned.
+1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10 and 1.21.11 with Fabric. Versions older than 1.14
+cannot run Fabric mods, so they are not planned.
 
 **What needs a restart?**
 Only Java mods (`.jar`). Texture packs, shaders, themes, HUD modules, sounds,

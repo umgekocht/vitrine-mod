@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -56,6 +57,28 @@ public final class SettingsHubScreen extends Screen {
 	private Text toast = null;
 	private long toastUntil;
 
+	/**
+	 * Oeffnet einen Screen, standardmaessig ueber {@code client.setScreen}.
+	 * GATE75-Testseam: {@link #setScreenOpenerForTest} ersetzt dies, damit
+	 * ein Test ohne laufenden {@link net.minecraft.client.MinecraftClient}
+	 * beweisen kann, welcher Screen geoeffnet wuerde -- derselbe Kniff wie
+	 * {@code LibraryScreen#setBackgroundWorkSchedulerForTest} (GATE113).
+	 */
+	private Consumer<Screen> screenOpener = s -> {
+		if (client != null) {
+			client.setScreen(s);
+		}
+	};
+
+	/**
+	 * GATE75: derselbe HUD-Editor-Screen wie {@code /vitrine hud edit}
+	 * ({@code HudCommand#runEdit}) -- beide rufen {@code
+	 * HudEditorScreen.create(parent)} auf, hier mit diesem Settings-Screen
+	 * als Eltern-Screen statt mit {@code client.currentScreen}.
+	 */
+	private final Runnable openHudEditorAction =
+			() -> screenOpener.accept(de.spassglas.vitrine.hud.client.HudEditorScreen.create(this));
+
 	public SettingsHubScreen(Screen parent) {
 		super(Text.translatable("vitrine.settings.title"));
 		this.parent = parent;
@@ -78,11 +101,7 @@ public final class SettingsHubScreen extends Screen {
 					showToast("vitrine.settings2.done");
 				})))));
 		sections.add(new Section("vitrine.settings2.tools", List.of(
-				new Row("hud_editor", new Action("vitrine.settings2.hud_editor.button", () -> {
-					if (client != null) {
-						client.setScreen(de.spassglas.vitrine.hud.client.HudEditorScreen.create(this));
-					}
-				})),
+				new Row("hud_editor", new Action("vitrine.settings2.hud_editor.button", openHudEditorAction)),
 				new Row("open_packs", new Action("vitrine.settings2.open.button", () -> open(VitrineConfig.dir().resolve("packs")))),
 				new Row("open_resourcepacks", new Action("vitrine.settings2.open.button",
 						() -> open(net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("resourcepacks")))),
@@ -258,5 +277,15 @@ public final class SettingsHubScreen extends Screen {
 	@Override
 	public boolean shouldPause() {
 		return false;
+	}
+
+	/** GATE75-Testseam: ersetzt, wie {@link #openHudEditorAction} einen Screen oeffnet. */
+	void setScreenOpenerForTest(Consumer<Screen> opener) {
+		this.screenOpener = opener;
+	}
+
+	/** GATE75-Testseam: die Aktion, die der "HUD-Editor"-Knopf in den Einstellungen ausloest. */
+	Runnable openHudEditorActionForTest() {
+		return openHudEditorAction;
 	}
 }

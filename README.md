@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://modrinth.com/mod/vitrine">Modrinth</a> ·
+  <a href="https://modrinth.com/mod/vitrine-store">Modrinth</a> ·
   <a href="docs/guide/install.md">Install</a> ·
   <a href="docs/guide/addons.md">Build add-ons</a> ·
   <a href="docs/guide/themes.md">Themes</a> ·
@@ -61,8 +61,8 @@
 
 ## Quick start
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft **1.21.1**.
-2. Put [Fabric API](https://modrinth.com/mod/fabric-api) and the Vitrine jar into
+1. Install [Fabric Loader](https://fabricmc.net/use/) for your Minecraft version.
+2. Put [Fabric API](https://modrinth.com/mod/fabric-api) and the matching Vitrine jar into
    `.minecraft/mods/`.
 3. Start the game and press **`M`**.
 
@@ -104,8 +104,9 @@ Tests: `./gradlew test`. Start a dev client: `./gradlew runClient`.
 
 ## Supported versions
 
-Minecraft **1.21.1** (Fabric). More 1.21.x versions follow. Releases before
-1.14 cannot run Fabric, so they are out of scope.
+Minecraft **1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10 and 1.21.11** (Fabric). Each version has its own jar on
+Modrinth. Releases before 1.14 cannot run
+Fabric, so they are out of scope.
 
 ## Contributing
 

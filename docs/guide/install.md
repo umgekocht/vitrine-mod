@@ -6,7 +6,7 @@ Vitrine is a client-side Fabric mod. You never need it on a server.
 
 | | Version |
 |---|---|
-| Minecraft Java Edition | 1.21.1 (more 1.21.x versions follow) |
+| Minecraft Java Edition | 1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10 and 1.21.11 |
 | Fabric Loader | 0.16.0 or newer |
 | Fabric API | any build for your Minecraft version |
 | Java | 21 (the official launcher ships it) |
@@ -14,11 +14,11 @@ Vitrine is a client-side Fabric mod. You never need it on a server.
 ## Step by step
 
 1. **Install Fabric.** Download the installer from <https://fabricmc.net/use/>,
-   pick Minecraft 1.21.1 and click *Install*. A new profile called
-   `fabric-loader-1.21.1` appears in the launcher.
+   pick your Minecraft version and click *Install*. A new profile called
+   `fabric-loader-<version>` appears in the launcher.
 2. **Download Fabric API** from Modrinth
-   (<https://modrinth.com/mod/fabric-api>) for 1.21.1.
-3. **Download Vitrine** from Modrinth or from the
+   (<https://modrinth.com/mod/fabric-api>) for your version.
+3. **Download Vitrine** for your version from Modrinth or from the
    [GitHub releases](https://github.com/umgekocht/vitrine-mod/releases).
 4. **Open your mods folder.** In the launcher go to *Installations*, hover the
    Fabric profile, click the folder icon and open `mods` (create it if it does

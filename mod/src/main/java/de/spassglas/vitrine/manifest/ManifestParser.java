@@ -14,6 +14,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Parst und validiert eine {@code vitrine.json}-Manifestzeichenkette gegen
@@ -29,6 +30,20 @@ public final class ManifestParser {
 
 	/** Resource-Name der eingebetteten Schema-Kopie, im selben Package. */
 	private static final String SCHEMA_RESOURCE_NAME = "vitrine.schema.json";
+
+	/**
+	 * 1:1-Java-Pendant der {@code DENY_PATTERNS} aus
+	 * {@code registry/license-policy.mjs} (GATE98). Dort erzwingt
+	 * {@code licenseWhitelistViolation} dieselben Muster beim Index-Bau --
+	 * diese Liste muss bei einer Aenderung dort synchron nachgezogen werden.
+	 */
+	private static final List<Pattern> LICENSE_DENY_PATTERNS = List.of(
+			Pattern.compile("all rights reserved", Pattern.CASE_INSENSITIVE),
+			Pattern.compile("alle rechte vorbehalten", Pattern.CASE_INSENSITIVE),
+			Pattern.compile("^cc-by(-sa)?-nc", Pattern.CASE_INSENSITIVE),
+			Pattern.compile("nur f[uü]r vitrine", Pattern.CASE_INSENSITIVE),
+			Pattern.compile("only for vitrine", Pattern.CASE_INSENSITIVE),
+			Pattern.compile("proprietary", Pattern.CASE_INSENSITIVE));
 
 	private static volatile JsonObject cachedSchema;
 
@@ -79,7 +94,28 @@ public final class ManifestParser {
 			throw new ManifestParseException(message, violations);
 		}
 
-		return toManifest(parsed.getAsJsonObject());
+		JsonObject rootObject = parsed.getAsJsonObject();
+		checkLicenseWhitelist(rootObject);
+		return toManifest(rootObject);
+	}
+
+	/**
+	 * Lehnt Manifeste ab, deren {@code license}-Wert einem der
+	 * {@link #LICENSE_DENY_PATTERNS} entspricht (GATE98) -- dieselben Muster,
+	 * die {@code registry/license-policy.mjs} beim Index-Bau erzwingt. Das
+	 * Schema stellt bereits sicher, dass {@code license} als Pflichtfeld
+	 * vorhanden und ein String ist.
+	 */
+	private static void checkLicenseWhitelist(JsonObject root) throws ManifestParseException {
+		String license = root.get("license").getAsString();
+		for (Pattern pattern : LICENSE_DENY_PATTERNS) {
+			if (pattern.matcher(license.trim()).find()) {
+				String message = "license '" + license
+						+ "' steht ausdruecklich auf der Verbotsliste (siehe registry/LICENSE-WHITELIST.md, Abschnitt \"Nicht erlaubt\")";
+				LOGGER.debug("Manifest abgelehnt: {}", message);
+				throw new ManifestParseException(message, List.of(message));
+			}
+		}
 	}
 
 	private static Manifest toManifest(JsonObject root) {

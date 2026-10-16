@@ -55,7 +55,7 @@ public final class TrendingPanelsWidget extends HomeWidget {
 		int h = getHeight();
 		RoundedRect.fill(context, x, y, w, h, HomeWidget.RADIUS, PANEL_COLOR);
 		int pad = 18;
-		heading(context, title, x + pad, y + 18, more);
+		heading(context, title, x + pad, y + 18, x + w - pad, more);
 		int lineY = y + 18 + VitrineTheme.TYPE_TITLE + 10;
 		context.fill(x + pad, lineY, x + w - pad, lineY + 1, 0x22FFFFFF);
 		if (items.isEmpty()) {

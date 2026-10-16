@@ -226,7 +226,7 @@ public final class ModrinthInstallScreen extends Screen {
 			int th = tw4 * 9 / 16;
 			galH = VitrineTheme.TYPE_TITLE + 30 + (thumbs > 0 ? th : VitrineTheme.TYPE_BODY) + 18;
 			RoundedRect.fill(context, lx, ly, leftW, galH, RADIUS, PANEL_COLOR);
-			heading(context, Text.translatable("vitrine.product.images"), lx + 18, ly + 16, null);
+			heading(context, Text.translatable("vitrine.product.images"), lx + 18, ly + 16, lx + leftW - 18, null);
 			if (thumbs == 0) {
 				ScaledText.draw(context, textRenderer, Text.translatable(project == null ? "vitrine.home.loading"
 						: "vitrine.product.no_images"), lx + 18, ly + VitrineTheme.TYPE_TITLE + 30, ActiveThemeColors.textMuted(),
@@ -250,7 +250,7 @@ public final class ModrinthInstallScreen extends Screen {
 			int bodyH = ScaledText.wrappedHeight(textRenderer, bodyText, leftW - 36, VitrineTheme.TYPE_BODY);
 			int descH = VitrineTheme.TYPE_TITLE + 30 + bodyH + 18;
 			RoundedRect.fill(context, lx, ly, leftW, descH, RADIUS, PANEL_COLOR);
-			heading(context, Text.translatable("vitrine.product.description"), lx + 18, ly + 16, null);
+			heading(context, Text.translatable("vitrine.product.description"), lx + 18, ly + 16, lx + leftW - 18, null);
 			ScaledText.drawWrapped(context, textRenderer, bodyText, lx + 18, ly + VitrineTheme.TYPE_TITLE + 30, leftW - 36,
 					ActiveThemeColors.text(), VitrineTheme.TYPE_BODY);
 			if (project != null && !project.license().isEmpty()) {
@@ -265,7 +265,7 @@ public final class ModrinthInstallScreen extends Screen {
 			// Mehr davon
 			int rx = lx + leftW + gap;
 			int ry = below;
-			heading(context, Text.translatable("vitrine.product.more"), rx, ry + 16, null);
+			heading(context, Text.translatable("vitrine.product.more"), rx, ry + 16, rx + rightW - 18, null);
 			int iy = ry + VitrineTheme.TYPE_TITLE + 30;
 			int count = 0;
 			for (ModrinthClient.Hit other : ModrinthCatalog.get(hit.projectType(), () -> {

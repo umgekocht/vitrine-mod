@@ -202,6 +202,47 @@ public final class ManifestParserTest {
 		}
 	}
 
+	/**
+	 * GATE98: der Lizenzwert wird nicht nur auf Praesenz, sondern auch gegen
+	 * dieselben {@code DENY_PATTERNS} wie {@code registry/license-policy.mjs}
+	 * geprueft -- ein lokal eingelegtes Manifest mit "Alle Rechte
+	 * vorbehalten" darf nicht klaglos durchgehen.
+	 */
+	@Test
+	public void deniedLicenseValuesAreRejected() {
+		for (String deniedLicense : List.of("Alle Rechte vorbehalten", "All Rights Reserved", "CC-BY-NC-4.0",
+				"Nur fuer Vitrine", "proprietary")) {
+			String json = manifestWithLicense(deniedLicense);
+			try {
+				Manifest parsed = ManifestParser.parse(json);
+				fail("license '" + deniedLicense + "' haette abgelehnt werden muessen, ergab aber: " + parsed);
+			} catch (ManifestParseException e) {
+				assertTrue(e.getMessage().contains("Verbotsliste"),
+						"Meldung muss auf die Verbotsliste hinweisen fuer '" + deniedLicense + "': " + e.getMessage());
+			}
+		}
+	}
+
+	@Test
+	public void allowedLicenseValuesStillParse() throws ManifestParseException {
+		for (String allowedLicense : List.of("CC-BY-4.0", "MIT")) {
+			Manifest parsed = ManifestParser.parse(manifestWithLicense(allowedLicense));
+			assertEquals(parsed.license(), allowedLicense);
+		}
+	}
+
+	private static String manifestWithLicense(String license) {
+		return "{"
+				+ "\"schemaVersion\":1,"
+				+ "\"id\":\"beispiel.lizenztest\","
+				+ "\"name\":\"Lizenztest\","
+				+ "\"version\":\"1.0.0\","
+				+ "\"category\":\"texturen\","
+				+ "\"author\":\"Vitrine-Testfixture\","
+				+ "\"license\":\"" + license.replace("\"", "\\\"") + "\""
+				+ "}";
+	}
+
 	// --- Hilfsfunktionen -------------------------------------------------
 
 	private static ManifestParseException expectRejection(String fileName) throws IOException {
