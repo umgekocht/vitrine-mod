@@ -1,0 +1,350 @@
+plugins {
+    id "fabric-loom" version "1.9.2"
+    id "maven-publish"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+// Z: ist eine SMB-Freigabe; Looms :remapJar schreibt/loescht Ausgabedateien
+// ueber ein Zip-Dateisystem, das die Netzfreigabe nicht zuverlaessig vertraegt.
+// Deshalb liegt der Build-Output auf lokaler Platte, der Quellcode bleibt auf Z:.
+// Wer isoliert/parallel bauen muss (z.B. mehrere Kritiker gleichzeitig), gibt
+// einen eigenen Pfad mit -Dvitrine.buildDir=<pfad> an.
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.MessageDigest
+
+// getCanonicalFile() und Path.toRealPath() loesen die Netzwerk-Identitaet
+// gemappter Laufwerke NICHT auf: Z:\Spassglas\Vitrine\mod und das bitgleiche
+// \\<Dateiserver>\<Freigabe>\Spassglas\Vitrine\mod bleiben nach toRealPath()
+// zwei verschiedene Strings (empirisch geprueft), obwohl es derselbe Ordner
+// ist -- ein per UNC-Pfad angegebener buildDir wuerde die reine
+// String-Ahnen-Pruefung also unbemerkt umgehen. Files.isSameFile() fragt
+// stattdessen die Datei-Identitaet des Betriebssystems ab (Windows:
+// Volume-Seriennummer + Datei-Index) und erkennt Laufwerksbuchstabe/
+// UNC-Alias sowie Junctions/Symlinks zuverlaessig als denselben Ordner.
+static Path existingAncestorOf(Path path) {
+    def cursor = path.toAbsolutePath().normalize()
+    while (cursor != null && !Files.exists(cursor)) {
+        cursor = cursor.parent
+    }
+    return cursor
+}
+
+static List<Path> missingTailOf(Path path) {
+    def cursor = path.toAbsolutePath().normalize()
+    def tail = []
+    while (cursor != null && !Files.exists(cursor)) {
+        tail.add(0, cursor.fileName)
+        cursor = cursor.parent
+    }
+    return tail
+}
+
+static boolean isSameOrAncestor(logger, Path possibleAncestor, Path path) {
+    if (possibleAncestor == null || !Files.exists(possibleAncestor)) {
+        return false
+    }
+    def cursor = path
+    while (cursor != null) {
+        if (Files.exists(cursor)) {
+            try {
+                if (Files.isSameFile(possibleAncestor, cursor)) {
+                    return true
+                }
+            } catch (IOException e) {
+                logger.warn("vitrine.buildDir-Waechter: Vergleich von '${possibleAncestor}' mit " +
+                        "'${cursor}' nicht moeglich (${e.message}) -- pruefe naechsten Vorfahren.")
+            }
+        }
+        cursor = cursor.parent
+    }
+    return false
+}
+
+// Stelle in `project`s eigenem Pfad, an der `candidateAncestor`
+// identitaetsgleich mit einem Vorfahren von `project` ist -- oder null.
+static Path findMatchingCursorInProjectSpace(logger, Path candidateAncestor, Path project) {
+    if (candidateAncestor == null || !Files.exists(candidateAncestor)) {
+        return null
+    }
+    def cursor = project
+    while (cursor != null) {
+        if (Files.exists(cursor)) {
+            try {
+                if (Files.isSameFile(candidateAncestor, cursor)) {
+                    return cursor
+                }
+            } catch (IOException e) {
+                logger.warn("vitrine.buildDir-Waechter: Vergleich von '${candidateAncestor}' mit " +
+                        "'${cursor}' nicht moeglich (${e.message}) -- pruefe naechsten Vorfahren.")
+            }
+        }
+        cursor = cursor.parent
+    }
+    return null
+}
+
+// Liefert den Konfliktgrund oder null, wenn `candidate` (muss noch nicht
+// existieren) gefahrlos als Build-Ordner fuer `project` nutzbar ist.
+//
+// Ein noch nicht angelegtes Ziel wird ueber seinen existierenden Vorfahren
+// plus die fehlenden Namenssegmente behandelt. Nur zu pruefen, ob dieser
+// Vorfahre mit dem Projekt oder einem seiner Vorfahren identisch ist, reicht
+// NICHT: ein Geschwisterordner (z.B. "..\out" neben dem Projektordner) hat
+// denselben Vorfahren wie das Projekt, liegt aber weder darin noch darueber.
+// Deshalb zusaetzlich pruefen, ob die fehlenden Namenssegmente tatsaechlich
+// in Richtung Projekt weiterfuehren (Praefix-Vergleich, ohne Gross-/
+// Kleinschreibung -- Windows-Dateinamen sind case-insensitiv).
+static String describeOverrideConflict(logger, Path candidate, Path project) {
+    def candidateAncestor = existingAncestorOf(candidate)
+    def tail = missingTailOf(candidate)
+
+    if (isSameOrAncestor(logger, project, candidateAncestor)) {
+        return "liegt innerhalb des Projektverzeichnisses ('${project}') oder ist es selbst"
+    }
+
+    def matchCursor = findMatchingCursorInProjectSpace(logger, candidateAncestor, project)
+    if (matchCursor != null) {
+        def remaining = matchCursor.relativize(project)
+        def remainingNames = (0..<remaining.nameCount).collect { remaining.getName(it).toString() }
+        def tailNames = tail.collect { it.toString() }
+        boolean tailLeadsTowardsProject = tailNames.size() <= remainingNames.size() &&
+                (0..<tailNames.size()).every { i -> tailNames[i].equalsIgnoreCase(remainingNames[i]) }
+        if (tailLeadsTowardsProject) {
+            return "ist das Projektverzeichnis ('${project}') oder ein Elternverzeichnis davon"
+        }
+    }
+
+    return null
+}
+
+// Verhindert, dass ein Override versehentlich eine bestehende Fremddatei
+// oder einen nicht-leeren Fremdordner uebernimmt, den 'clean' dann loescht.
+// Ein Ordner gilt als "unser", sobald der Marker drin liegt (wird direkt
+// nach der ersten erfolgreichen Pruefung angelegt) -- wiederholte Builds
+// gegen denselben Override-Pfad (z.B. mehrere Kritiker-Laeufe) bleiben so
+// moeglich, ohne bei jedem Lauf erneut zu blocken.
+// ".vitrine-buildDir" -- wiederholt als Literal statt als static-Konstante,
+// weil Groovy-Buildskripte static-Feld-Referenzen aus static Methoden heraus
+// nicht auf dieselbe Art aufloesen wie Klassenfelder (siehe Kommentar am
+// Aufrufer weiter unten).
+static String describeUnsafeExistingTarget(File target) {
+    if (!target.exists()) {
+        return null
+    }
+    if (!target.isDirectory()) {
+        return "existiert bereits als Datei (kein Ordner) -- ein Build-Ordner darf keine bestehende Datei uebernehmen"
+    }
+    if (new File(target, ".vitrine-buildDir").exists()) {
+        return null
+    }
+    def contents = target.list()
+    if (contents != null && contents.length > 0) {
+        return "existiert bereits, ist nicht leer und wurde bisher nicht von Vitrine als Build-Ordner " +
+                "verwendet (kein '.vitrine-buildDir' darin) -- 'clean' wuerde fremden Inhalt loeschen"
+    }
+    return null
+}
+
+def buildDirOverride = System.getProperty("vitrine.buildDir")
+def projectDirPath = project.projectDir.toPath()
+// Pro Projektpfad ein eigener Ordner, damit zwei Checkouts (oder Worktrees)
+// desselben Nutzers nicht denselben Temp-Ordner teilen und sich gegenseitig
+// ueberschreiben/als UP-TO-DATE mitreissen. SHA-256 statt hashCode(), damit
+// zwei verschiedene Projektpfade den Ordner nicht per Kollision teilen.
+def projectHashBytes = MessageDigest.getInstance("SHA-256").digest(projectDirPath.toString().getBytes("UTF-8"))
+def projectHash = projectHashBytes[0..<8].collect { String.format("%02x", it) }.join()
+def defaultBuildDir = new File(System.getProperty("java.io.tmpdir"), "vitrine-mod-build-${projectHash}")
+
+// Selbsttest der Waechter-Logik bei jeder Konfiguration: die Funktionen oben
+// leben nur in diesem Skript (kein buildSrc), eine separate Testklasse
+// wuerde sie nicht erreichen. Stattdessen bei jedem './gradlew'-Aufruf gegen
+// Wegwerf-Ordner unter java.io.tmpdir pruefen -- faengt Regressionen sofort,
+// nicht erst beim naechsten Kritiker-Angriff.
+def selfTestRoot = Files.createTempDirectory("vitrine-buildguard-selftest-")
+try {
+    def fakeProject = selfTestRoot.resolve("proj").resolve("mod")
+    Files.createDirectories(fakeProject)
+
+    def assertConflict = { Path candidate, String label ->
+        if (describeOverrideConflict(logger, candidate, fakeProject) == null) {
+            throw new GradleException("vitrine.buildDir-Waechter-Selbsttest fehlgeschlagen (${label}): " +
+                    "'${candidate}' haette als Konflikt erkannt werden muessen, wurde aber durchgelassen.")
+        }
+    }
+    def assertNoConflict = { Path candidate, String label ->
+        def result = describeOverrideConflict(logger, candidate, fakeProject)
+        if (result != null) {
+            throw new GradleException("vitrine.buildDir-Waechter-Selbsttest fehlgeschlagen (${label}): " +
+                    "'${candidate}' haette erlaubt werden muessen, wurde aber blockiert (${result}).")
+        }
+    }
+
+    assertConflict(fakeProject, "identisch mit dem Projekt")
+    assertConflict(fakeProject.parent, "Vorfahre des Projekts")
+    assertConflict(fakeProject.resolve("src"), "Nachfahre, existiert bereits")
+    assertConflict(fakeProject.resolve("nicht-angelegt"), "Nachfahre, existiert noch nicht")
+
+    // Geschwisterordner mit gemeinsamem Vorfahren, existiert nicht -- war die
+    // Runde-2-Regression ("freshdev/out" neben "freshdev/Vitrine/mod").
+    assertNoConflict(selfTestRoot.resolve("out"), "Geschwister des Projekts, existiert nicht")
+
+    def outside = selfTestRoot.resolve("outside")
+    Files.createDirectories(outside)
+    assertNoConflict(outside, "ausserhalb, existiert bereits")
+
+    def fileTarget = selfTestRoot.resolve("datei.txt")
+    Files.write(fileTarget, "wichtig".getBytes("UTF-8"))
+    if (describeUnsafeExistingTarget(fileTarget.toFile()) == null) {
+        throw new GradleException("vitrine.buildDir-Waechter-Selbsttest fehlgeschlagen: eine bestehende " +
+                "Datei als Build-Ordner-Ziel wurde nicht abgelehnt.")
+    }
+
+    def foreignDir = selfTestRoot.resolve("fremd")
+    Files.createDirectories(foreignDir)
+    Files.write(foreignDir.resolve("wichtige-datei.txt"), "x".getBytes("UTF-8"))
+    if (describeUnsafeExistingTarget(foreignDir.toFile()) == null) {
+        throw new GradleException("vitrine.buildDir-Waechter-Selbsttest fehlgeschlagen: ein nicht leerer " +
+                "fremder Ordner ohne Marker wurde nicht abgelehnt.")
+    }
+
+    def emptyDir = selfTestRoot.resolve("leer")
+    Files.createDirectories(emptyDir)
+    if (describeUnsafeExistingTarget(emptyDir.toFile()) != null) {
+        throw new GradleException("vitrine.buildDir-Waechter-Selbsttest fehlgeschlagen: ein leerer Ordner " +
+                "wurde faelschlich abgelehnt.")
+    }
+} finally {
+    selfTestRoot.toFile().deleteDir()
+}
+
+def effectiveBuildDir
+if (buildDirOverride != null) {
+    if (buildDirOverride.trim().isEmpty()) {
+        throw new GradleException(
+            "-Dvitrine.buildDir ist leer gesetzt. Das wuerde auf das Projektverzeichnis " +
+            "auflösen und 'clean' den Quellbaum loeschen lassen. Absoluten Zielordner angeben."
+        )
+    }
+    def candidate = new File(buildDirOverride)
+    if (!candidate.isAbsolute()) {
+        throw new GradleException(
+            "-Dvitrine.buildDir='${buildDirOverride}' ist kein absoluter Pfad. " +
+            "Ein relativer Pfad koennte je nach Startverzeichnis auf das Projekt selbst zeigen."
+        )
+    }
+    def conflict = describeOverrideConflict(logger, candidate.toPath(), projectDirPath)
+    if (conflict != null) {
+        throw new GradleException(
+            "-Dvitrine.buildDir='${buildDirOverride}' ${conflict} -- auch wenn Laufwerksbuchstabe, " +
+            "UNC-Pfad, Junction oder Symlink unterschiedlich aussehen, ist es derselbe Ordner auf der " +
+            "Platte. 'clean' wuerde damit den Quellbaum loeschen. Einen Ordner ausserhalb des Repos angeben."
+        )
+    }
+    def unsafe = describeUnsafeExistingTarget(candidate)
+    if (unsafe != null) {
+        throw new GradleException("-Dvitrine.buildDir='${buildDirOverride}' ${unsafe}.")
+    }
+    candidate.mkdirs()
+    new File(candidate, ".vitrine-buildDir").text =
+            "Von Vitrine als Build-Ordner angelegt -- 'clean' darf hier loeschen.\n"
+    effectiveBuildDir = candidate
+} else {
+    effectiveBuildDir = defaultBuildDir
+}
+
+if (!(effectiveBuildDir.path ==~ /(?s)\A\p{ASCII}*\z/)) {
+    // Windows kann sun.jnu.encoding nicht per JVM-Argument umstellen (native
+    // beim Start aus der System-Locale gesetzt) und 8.3-Kurznamen sind auf
+    // vielen Systemen abgeschaltet. Ein Nicht-ASCII-Zeichen im Build-Pfad
+    // (z.B. Umlaut im Windows-Kontonamen, auch in einem uebergebenen
+    // -Dvitrine.buildDir) laesst Gradles Testworker beim Klassenladen mit
+    // einer kryptischen ClassNotFoundException scheitern, statt den echten
+    // Grund zu nennen. Lieber hier klar sagen, was los ist -- fuer beide
+    // Faelle, Default wie Override.
+    throw new GradleException(
+        "Der Build-Ordner '${effectiveBuildDir}' enthaelt ein Nicht-ASCII-Zeichen " +
+        "(z.B. durch einen Umlaut im Windows-Benutzerkonto oder im uebergebenen Pfad). " +
+        "Windows/Gradle koennen das beim Testlauf nicht zuverlaessig verarbeiten. " +
+        "Abhilfe: -Dvitrine.buildDir=<rein-ASCII-Pfad> angeben."
+    )
+}
+
+layout.buildDirectory.set(effectiveBuildDir)
+
+repositories {
+    // Loom adds the essential Fabric/Minecraft repositories automatically.
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Vitrine-Addon-Plattform (umgekocht, 2026-10-13): Skript-Laufzeiten, per jar-in-jar.
+    // LuaJ: MIT. Rhino: MPL 2.0. Beide reines Java, ohne native Teile.
+    implementation "org.luaj:luaj-jse:3.0.1"
+    include "org.luaj:luaj-jse:3.0.1"
+    implementation "org.mozilla:rhino:1.7.15"
+    include "org.mozilla:rhino:1.7.15"
+
+    testImplementation "org.testng:testng:${project.testng_version}"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = 21
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+    from("NOTICE") {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+}
+
+test {
+    useTestNG()
+    // Windows-Testworker brechen beim Klassenladen ab, wenn ein Pfadsegment
+    // ausserhalb des ASCII-Bereichs liegt (z.B. Umlaut im Benutzerkonto) und
+    // die JVM nicht ausdruecklich auf UTF-8 fuer Datei-/Pfadnamen gestellt ist.
+    jvmArgs "-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8"
+    // GATE110: der Vertrauensanker-Override lebt nicht mehr hinter einer zur
+    // Laufzeit umschaltbaren Systemeigenschaft -- siehe
+    // src/test/java/.../vpkg/SigningKeyTestSupport.java.
+}
+
+// Nur Entwicklung: gradlew runClient -PvitrineAutoshot=<ordner> fotografiert die
+// Vitrine-Bildschirme automatisch in 1920x1080 (de.spassglas.vitrine.dev.AutoShot).
+loom {
+    runs {
+        client {
+            if (project.hasProperty('vitrineAutoshot')) {
+                vmArg "-Dvitrine.autoshot=${project.property('vitrineAutoshot')}"
+                programArgs '--width', '1920', '--height', '1080'
+            }
+        }
+    }
+}

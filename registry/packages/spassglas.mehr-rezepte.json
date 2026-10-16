@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.mehr-rezepte",
+  "name": "Mehr Rezepte",
+  "category": "addon",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "description": "Neue Crafting-Rezepte: Sattel aus Leder, Namensschild aus Papier und Faden, Faden aus Wolle. Wirkt sofort in deiner Welt, ohne Neustart.",
+  "tags": [
+    "addon",
+    "rezepte",
+    "crafting"
+  ],
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/mehr-rezepte/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "license": "CC-BY-4.0",
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/spassglas.mehr-rezepte-v1.0.0/mehr-rezepte.vpkg",
+      "sha256": "4aaf0d7e514a73bf157ab44ff179f3000e5ba4e7f19427d0f73cad8b825be182",
+      "signature": "7jqhBCVX5C7NsXykWM5CJRJlYfnNktgX1/KNq6DPe+Ldk4hI+c++lrSQW/6X2ezppQNAjgtascCNWlC2lutADA==",
+      "size": 51743,
+      "publishedAt": "2026-10-12T16:12:14Z"
+    }
+  ],
+  "latestVersion": "1.0.0",
+  "updatedAt": "2026-10-12T16:12:14Z"
+}

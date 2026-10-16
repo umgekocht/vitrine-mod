@@ -1,0 +1,93 @@
+name: Release
+
+# Laeuft bei jedem Tag "v*" (z. B. v0.1.0): baut den Mod-Jar mit Gradle
+# (mod/gradlew build, JDK 21 Temurin), schreibt eine SHA-256-Pruefsumme dazu,
+# legt ein GitHub-Release fuer den Tag an (falls es noch nicht existiert) und
+# haengt Jar + Pruefsummen-Datei als Assets an.
+#
+# ROADMAP A5. Prueft NICHT automatisch den A1-Frisch-Test
+# (scripts/fresh-test.ps1) -- der startet einen echten Minecraft-Client mit
+# einer von Hand zu klickenden Strecke (siehe scripts/README.md) und laeuft
+# hier auf ubuntu-latest ohnehin nicht. "Der heruntergeladene Jar besteht A1"
+# (Fertig-Kriterium) wird nach dem ersten echten Release von Hand
+# nachgewiesen, sobald `gh` verfuegbar ist und A4 (Repo-Anlage) erledigt ist.
+on:
+  push:
+    tags:
+      - "v*"
+
+# Minimal und explizit (wie build-index.yml/K6 fordert): dieser Workflow legt
+# ein Release im eigenen Repo an und haengt Assets an -- dafuer reicht
+# 'contents: write'. Kein Zugriff auf Issues, Actions, Packages, Secrets etc.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 21 einrichten
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Mod bauen (mod/gradlew build)
+        # mod/build.gradle leitet den Build-Ordner IMMER (nicht nur unter Z:)
+        # auf java.io.tmpdir um, ausser -Dvitrine.buildDir wird gesetzt --
+        # siehe den Kommentar am Kopf von mod/build.gradle ("Z: ist eine
+        # SMB-Freigabe ..."). Ohne dieses Flag laege der fertige Jar auf dem
+        # Runner an einem vom Projektpfad abgeleiteten Temp-Ordnernamen, den
+        # dieser Workflow nicht vorhersagen koennte. Deshalb ausdruecklich
+        # auf einen bekannten, absoluten Ort ausserhalb des Checkouts zeigen
+        # ($RUNNER_TEMP, von Actions vorgegeben) -- ohne mod/build.gradle
+        # anzufassen.
+        working-directory: mod
+        run: ./gradlew build "-Dvitrine.buildDir=${{ runner.temp }}/vitrine-build"
+
+      - name: Erzeugte Jar-Datei ermitteln
+        id: jar
+        env:
+          LIBS_DIR: ${{ runner.temp }}/vitrine-build/libs
+        run: |
+          # LIBS_DIR enthaelt bei diesem Projekt nur den fertig remapten Jar
+          # (vitrine-<version>.jar) -- Looms Zwischenstufe
+          # (vitrine-<version>-dev.jar) landet in .../devlibs/, eine
+          # Sources-Jar wird nicht gebaut (kein withSourcesJar() in
+          # mod/build.gradle). -sources.jar/-dev.jar trotzdem ausdruecklich
+          # ausschliessen, falls sich das je aendert.
+          shopt -s nullglob
+          candidates=("$LIBS_DIR"/vitrine-*.jar)
+          jars=()
+          for c in "${candidates[@]}"; do
+            case "$c" in
+              *-sources.jar|*-dev.jar) continue ;;
+              *) jars+=("$c") ;;
+            esac
+          done
+          if [ "${#jars[@]}" -ne 1 ]; then
+            echo "Erwartete genau eine Jar-Datei unter $LIBS_DIR/vitrine-*.jar (ohne -sources/-dev), gefunden: ${jars[*]}" >&2
+            exit 1
+          fi
+          echo "dir=$LIBS_DIR" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "${jars[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: SHA-256-Pruefsumme schreiben
+        id: checksum
+        working-directory: ${{ steps.jar.outputs.dir }}
+        run: |
+          sha256sum "${{ steps.jar.outputs.name }}" > "${{ steps.jar.outputs.name }}.sha256"
+          echo "name=${{ steps.jar.outputs.name }}.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub-Release anlegen (falls noch nicht vorhanden), Jar + Pruefsumme anhaengen
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          fail_on_unmatched_files: true
+          # v0.1.0-alpha.1 und Co. sind Vorabversionen, v0.1.0 nicht.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            ${{ steps.jar.outputs.dir }}/${{ steps.jar.outputs.name }}
+            ${{ steps.jar.outputs.dir }}/${{ steps.checksum.outputs.name }}

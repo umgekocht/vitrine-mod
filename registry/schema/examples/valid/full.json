@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.klarglas-theme",
+  "name": "Klarglas",
+  "version": "2.1.0-beta.1+build.5",
+  "category": "theme",
+  "author": "Spassglas Studio",
+  "description": "Das Standard-Theme fuer den Vitrine-Store: klar, graustufig, hoher Kontrast.",
+  "capabilities": [
+    "theme",
+    "hud"
+  ],
+  "icon": "icon.png",
+  "screenshots": [
+    "screenshots/vorher.png",
+    "screenshots/nachher.jpg"
+  ],
+  "homepage": "https://github.com/spassglas/vitrine-theme-klarglas",
+  "license": "CC-BY-4.0"
+}

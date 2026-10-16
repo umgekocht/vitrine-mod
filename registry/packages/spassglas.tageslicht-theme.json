@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.tageslicht-theme",
+  "name": "Tageslicht",
+  "category": "theme",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "description": "Warmes Store-Theme mit Bernstein-Akzent -- hell am Tag, ruhig am Abend.",
+  "license": "CC-BY-4.0",
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/tageslicht-theme/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/tageslicht-theme-v1.0.0/tageslicht-theme.vpkg",
+      "sha256": "78ef382dd17b28cdd6a8a1ce67d20fe0905c9c93a66756080717e851569b7773",
+      "signature": "NETxHMlhBOkvjpFvreE7+ij4IQtWMVsR8YPK4XqoU0DyQ14WRbTczEG4p/xeCk9CYqjlm+fgDpN/2ptjAaR8Cw==",
+      "size": 1822,
+      "publishedAt": "2026-10-04T09:49:19Z"
+    },
+    {
+      "version": "1.0.1",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/tageslicht-theme-v1.0.1/tageslicht-theme.vpkg",
+      "sha256": "9bd2cf650331f924446ac5f31435eebffc26c1618312c8d1cd9ed9fd71b66235",
+      "signature": "GgtQZ0Tb/R4furDBo0wUGO+IJ3V1CSqclb6BQk054gzAA3UnaIc6nTPON1UAzMxC0rK5sj7lPAT162oyG7LpDg==",
+      "size": 7860,
+      "publishedAt": "2026-10-05T22:39:30.927Z"
+    }
+  ],
+  "latestVersion": "1.0.1",
+  "updatedAt": "2026-10-05T22:39:30.927Z",
+  "tags": [
+    "theme",
+    "hell",
+    "warm"
+  ]
+}

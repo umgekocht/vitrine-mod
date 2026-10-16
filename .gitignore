@@ -1,0 +1,21 @@
+# Gradle / Loom (mod/)
+mod/.gradle/
+mod/build/
+mod/run/
+mod/out/
+mod/logs/
+*.hprof
+
+# Node (designer/, cli/, registry/)
+node_modules/
+
+# Autopilot runtime (nicht Teil des Quellstands)
+.autopilot.lock
+.autopilot-prompt.txt
+autopilot-logs/
+
+# Editor/OS
+.idea/
+.vscode/
+*.iml
+Thumbs.db

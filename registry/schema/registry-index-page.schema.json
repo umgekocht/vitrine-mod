@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:registry-index-page:v1",
+  "title": "Vitrine-Registry-Index-Seite (index/index.json, index/index-2.json, ...)",
+  "description": "Schema fuer eine paginierte Index-Seite im Katalog-Repo 'vitrine-registry' (M4/K1). Seite 1 heisst 'index/index.json', jede weitere Seite 'index/index-<n>.json'. Erzeugt von registry/build-index.js aus allen packages/<id>.json-Dateien. Charter-Regel 8: derselbe Aufbau, den der Katalog-Client im Mod (K2) spaeter liest -- kein zweites Format.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "page",
+    "pageSize",
+    "totalPages",
+    "totalCount",
+    "nextPage",
+    "previousPage",
+    "packages"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses Index-Seiten-Schemas. Aktuell fest auf 1.",
+      "type": "integer",
+      "const": 1
+    },
+    "generatedAt": {
+      "description": "Zeitpunkt des Index-Baus, ISO-8601/RFC-3339.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "page": {
+      "description": "1-basierte Seitennummer dieser Datei.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "pageSize": {
+      "description": "Maximale Anzahl Pakete je Seite.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "totalPages": {
+      "description": "Gesamtzahl der Seiten.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "totalCount": {
+      "description": "Gesamtzahl aller Pakete ueber alle Seiten.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "nextPage": {
+      "description": "Dateiname der naechsten Seite relativ zu 'index/' (z. B. 'index-2.json'), oder null auf der letzten Seite.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^index-[1-9][0-9]*\\.json$"
+    },
+    "previousPage": {
+      "description": "Dateiname der vorherigen Seite relativ zu 'index/', oder null auf Seite 1.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^index(-[1-9][0-9]*)?\\.json$"
+    },
+    "packages": {
+      "description": "Paket-Kurzeintraege dieser Seite, sortiert nach 'id' fuer reproduzierbare Ausgabe.",
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "author",
+          "category",
+          "license",
+          "latestVersion",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "author": {
+            "description": "Anzeigename des Autors (abgeflacht aus author.name im Paketeintrag).",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "texturen",
+              "theme",
+              "hud",
+              "shader",
+              "sound",
+              "sprache",
+              "cosmetics",
+              "bundle",
+              "addon"
+            ]
+          },
+          "license": {
+            "description": "Lizenz der Paketinhalte (GATE101), abgeflacht aus 'license' im Paketeintrag -- erlaubt der Kachelansicht im Mod, die Lizenz anzuzeigen, ohne vorher die Detailseite zu laden.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "latestVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^https://[^\\s]+\\.png$",
+            "maxLength": 512
+          },
+          "shortDescription": {
+            "description": "Auf 160 Zeichen gekuerzte Beschreibung fuer die Kachelansicht.",
+            "type": "string",
+            "maxLength": 160
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "javaMod": {
+            "description": "GATE6/J2: true, wenn 'contentClass' im Paketeintrag 'javamod' ist (ein .jar-Angebot, Klasse B). Fehlt das Feld, gilt Klasse A ('resource') -- IndexPage#fromJson im Mod liest 'fehlt' und 'false' gleich.",
+            "type": "boolean"
+          },
+          "minecraftVersions": {
+            "description": "GATE70-FOLLOW: abgeflacht aus 'minecraftVersions' im Paketeintrag (registry-package.schema.json), optional -- fehlt es dort, fehlt es auch hier.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*\\.[0-9]+(\\.[0-9]+)?$",
+              "maxLength": 16
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.luegt-ueber-hot",
+  "name": "Luegt ueber hot",
+  "version": "1.0.0",
+  "category": "hud",
+  "contentClass": "javamod",
+  "hotApply": true,
+  "javaMod": {
+    "loader": "fabric",
+    "minecraftVersions": [
+      "1.21.1"
+    ],
+    "jar": {
+      "fileName": "luegt-ueber-hot-1.0.0.jar",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "size": 20480
+    }
+  },
+  "author": "Vitrine-Testfixture",
+  "license": "MIT"
+}

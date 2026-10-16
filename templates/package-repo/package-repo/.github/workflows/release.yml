@@ -1,0 +1,200 @@
+name: Release
+
+# Laeuft bei jedem Tag "v*" (z. B. v1.0.0): prueft das Manifest, baut das
+# .vpkg, signiert es (falls ein Schluessel-Secret hinterlegt ist -- sonst
+# bleibt es klar erkennbar unsigniert), veroeffentlicht ein GitHub-Release mit
+# dem .vpkg als Asset und oeffnet optional einen PR gegen vitrine-registry.
+# Siehe scripts/dry-run.mjs im Vorlagen-Repo (vitrine/templates/package-repo)
+# fuer den lokalen Trockenlauf derselben Schritte ohne Tag/Push/gh (D8/K6-Stil).
+#
+# Nutzt vendor/vitrine-cli/ (eine mitgelieferte Kopie von cli/,
+# designer/schema-validate.js und registry/schema/vitrine.schema.json aus dem
+# Vitrine-Hauptrepo -- siehe vendor/vitrine-cli/README.md) statt die drei
+# per zweitem actions/checkout aus dem Hauptrepo zu holen: das oeffentliche
+# Hauptrepo `umgekocht/vitrine-mod` existiert (Stand D8) noch nicht (ROADMAP A4
+# steht aus) -- ein Paket-Autor, der heute "Use this template" benutzt, soll
+# darauf nicht warten muessen. Vendern statt Nachladen ist derselbe Umgang
+# mit demselben Problem wie beim Mod-Jar (P1: eigene eingebettete
+# Schema-Kopie statt Laufzeit-Nachladen).
+on:
+  push:
+    tags:
+      - "v*"
+
+# Minimal und explizit (Charter-Regel, wie K6 fordert): dieser Workflow legt
+# ein Release im eigenen Repo an und haengt ein Asset an -- dafuer reicht
+# 'contents: write'. Kein 'pull-requests: write': der optionale PR-Schritt
+# gegen das FREMDE Repo vitrine-registry laeuft ueber ein selbst hinterlegtes
+# REGISTRY_PAT-Secret, nicht ueber Rechte des eingebauten GITHUB_TOKEN dieses
+# Repos (der reicht fuer ein anderes Repo ohnehin nicht).
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Eigenes Repo auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Paketinhalt ohne .github/ und vendor/ zusammenstellen
+        # cli/vitrine.js pack packt den gesamten uebergebenen Ordner
+        # rekursiv ein (siehe vendor/vitrine-cli/cli/lib/pack.js) -- CI-
+        # Werkzeug (dieser Workflow selbst, die vendorte CLI) soll nicht im
+        # ausgelieferten .vpkg landen. Staging-Kopie statt Ausschlussliste
+        # in pack.js, damit ein lokales `vitrine.js pack .` (ohne CI)
+        # weiterhin genauso funktioniert wie hier.
+        # Reine node:fs-Bordmittel statt rsync (keine Annahme ueber
+        # vorinstallierte Runner-Werkzeuge).
+        run: |
+          node -e "
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const src = process.cwd();
+            const dst = path.join(process.env.RUNNER_TEMP, 'paket-inhalt');
+            fs.cpSync(src, dst, {
+              recursive: true,
+              filter: (p) => {
+                const rel = path.relative(src, p).split(path.sep).join('/');
+                if (rel === '.git' || rel.startsWith('.git/')) return false;
+                if (rel === '.github' || rel.startsWith('.github/')) return false;
+                if (rel === 'vendor' || rel.startsWith('vendor/')) return false;
+                return true;
+              },
+            });
+          "
+
+      - name: Manifest gegen vitrine.schema.json pruefen
+        run: node vendor/vitrine-cli/cli/vitrine.js validate "$RUNNER_TEMP/paket-inhalt"
+
+      - name: Paket-Id/Version aus vitrine.json lesen
+        id: manifest
+        run: |
+          node -e "
+            const fs = require('node:fs');
+            const m = JSON.parse(fs.readFileSync('vitrine.json', 'utf8'));
+            const out = process.env.GITHUB_OUTPUT;
+            fs.appendFileSync(out, 'id=' + m.id + '\n');
+            fs.appendFileSync(out, 'version=' + m.version + '\n');
+            fs.appendFileSync(out, 'vpkg=' + m.id + '-' + m.version + '.vpkg\n');
+          "
+
+      - name: .vpkg bauen
+        run: node vendor/vitrine-cli/cli/vitrine.js pack "$RUNNER_TEMP/paket-inhalt" "${{ steps.manifest.outputs.vpkg }}"
+
+      - name: .vpkg signieren (nur wenn VITRINE_SIGNING_KEY_B64 gesetzt ist)
+        id: sign
+        env:
+          VITRINE_SIGNING_KEY_B64: ${{ secrets.VITRINE_SIGNING_KEY_B64 }}
+        run: |
+          if [ -z "$VITRINE_SIGNING_KEY_B64" ]; then
+            echo "Kein VITRINE_SIGNING_KEY_B64-Secret hinterlegt -- dieses .vpkg bleibt UNSIGNIERT."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/vitrine-signing-key"
+          echo "$VITRINE_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/vitrine-signing-key/signing-key"
+          VITRINE_SIGNING_KEY_DIR="$RUNNER_TEMP/vitrine-signing-key" \
+            node vendor/vitrine-cli/cli/vitrine.js sign "${{ steps.manifest.outputs.vpkg }}"
+          echo "'${{ steps.manifest.outputs.vpkg }}' signiert mit dem hinterlegten Schluessel."
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub-Release fuer diesen Tag anlegen, .vpkg anhaengen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VPKG: ${{ steps.manifest.outputs.vpkg }}
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: |
+          assets=("$VPKG")
+          if [ "$SIGNED" = "true" ]; then
+            assets+=("$VPKG.integrity.json")
+            notes="Automatisch gebaut und signiert aus Tag ${GITHUB_REF_NAME}."
+          else
+            notes="Automatisch gebaut aus Tag ${GITHUB_REF_NAME}. UNSIGNIERT -- kein VITRINE_SIGNING_KEY_B64-Secret hinterlegt."
+          fi
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "$notes"
+          echo "Release-Link:"
+          gh release view "$GITHUB_REF_NAME" --json url --jq .url
+
+      - name: PR an vitrine-registry oeffnen (optional, nur wenn REGISTRY_PAT gesetzt ist)
+        env:
+          REGISTRY_PAT: ${{ secrets.REGISTRY_PAT }}
+          ID: ${{ steps.manifest.outputs.id }}
+          VERSION: ${{ steps.manifest.outputs.version }}
+          VPKG: ${{ steps.manifest.outputs.vpkg }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          if [ -z "$REGISTRY_PAT" ]; then
+            echo "Kein REGISTRY_PAT-Secret hinterlegt -- Schritt uebersprungen."
+            echo "Eintrag manuell per Pull Request gegen vitrine-registry pflegen,"
+            echo "siehe dort CONTRIBUTING.md (packages/${ID}.json anlegen/aktualisieren)."
+            exit 0
+          fi
+          if [ ! -f "$VPKG.integrity.json" ]; then
+            echo "'$VPKG' ist unsigniert (kein VITRINE_SIGNING_KEY_B64-Secret gesetzt)."
+            echo "vitrine-registry verlangt eine gueltige Signatur je Version (registry-package.schema.json) --"
+            echo "kein automatischer PR mit einem erfundenen Signaturfeld (Charter-Regel 2: nichts vorgaukeln)."
+            echo "Erst signieren, dann erneut taggen, oder den Eintrag von Hand per PR pflegen."
+            exit 0
+          fi
+          export GH_TOKEN="$REGISTRY_PAT"
+          sha256=$(sha256sum "$VPKG" | cut -d' ' -f1)
+          signature=$(node -e "console.log(require('./$VPKG.integrity.json').signature)")
+          size=$(stat -c%s "$VPKG")
+          published="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          vpkgUrl="$REPO_URL/releases/download/$GITHUB_REF_NAME/$VPKG"
+
+          gh repo clone umgekocht/vitrine-registry registry-fork -- --depth 1
+          cd registry-fork
+          git config user.name "vitrine-package-template-action"
+          git config user.email "actions@users.noreply.github.com"
+          branch="add-${ID}-${VERSION}"
+          git checkout -b "$branch"
+          VERSION="$VERSION" VPKGURL="$vpkgUrl" SHA256="$sha256" SIGNATURE="$signature" \
+            SIZE="$size" PUBLISHED="$published" ID="$ID" REPOURL="$REPO_URL" \
+            node -e "
+              const fs = require('node:fs');
+              const path = 'packages/' + process.env.ID + '.json';
+              const entry = {
+                version: process.env.VERSION,
+                vpkgUrl: process.env.VPKGURL,
+                sha256: process.env.SHA256,
+                signature: process.env.SIGNATURE,
+                size: Number(process.env.SIZE),
+                publishedAt: process.env.PUBLISHED
+              };
+              let doc;
+              if (fs.existsSync(path)) {
+                doc = JSON.parse(fs.readFileSync(path, 'utf8'));
+                doc.versions.push(entry);
+              } else {
+                doc = {
+                  schemaVersion: 1,
+                  id: process.env.ID,
+                  name: process.env.ID,
+                  category: 'texturen',
+                  author: { name: 'Bitte ausfuellen' },
+                  repository: process.env.REPOURL,
+                  versions: [entry],
+                  latestVersion: entry.version,
+                  updatedAt: entry.publishedAt
+                };
+              }
+              doc.latestVersion = entry.version;
+              doc.updatedAt = entry.publishedAt;
+              fs.writeFileSync(path, JSON.stringify(doc, null, 2) + '\n', 'utf8');
+            "
+          git add "packages/${ID}.json"
+          git commit -m "Paket ${ID} ${VERSION} hinzufuegen"
+          git push origin "$branch"
+          gh pr create --repo umgekocht/vitrine-registry \
+            --title "Paket ${ID} ${VERSION}" \
+            --body "Automatisch aus ${REPO_URL} (Tag ${GITHUB_REF_NAME}) geoeffnet. Bitte Autor-Name/URL und Kategorie vor dem Mergen pruefen -- siehe CONTRIBUTING.md." \
+            --head "$branch" --base main

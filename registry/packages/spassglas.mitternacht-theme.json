@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.mitternacht-theme",
+  "name": "Mitternacht",
+  "category": "theme",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "description": "Dunkles Store-Theme mit hohem Kontrast fuer Sessions am Abend.",
+  "tags": [
+    "dunkel",
+    "kontrast"
+  ],
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/mitternacht-theme/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "license": "CC-BY-4.0",
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/mitternacht-theme-v1.0.0/mitternacht-theme.vpkg",
+      "sha256": "8683dfe4dc760283cb50ef71af2b163807150018fcf33ac196c3d286dc17ad78",
+      "signature": "oyvfFJcN35ZOUdqf3vCe1msLeOLOJZnf4KXiK8Fkv4veCBDpGpfW9EGFSXeMpo/2MFTtO+A6d7gAD9n1y9zgAg==",
+      "size": 1733,
+      "publishedAt": "2026-09-19T12:30:35Z"
+    },
+    {
+      "version": "1.0.1",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/mitternacht-theme-v1.0.1/mitternacht-theme.vpkg",
+      "sha256": "d407d23d65098725b5cac7a1f4f7776c7b822c7586e13d99078f031b7460b162",
+      "signature": "AtHue3p1RIirS2dE5pml/Vf01/eBX3yZ/5EKMNlbh+NU1KIS9IpcHVi5U/RnK0mHY9vIRUyTPF3XiOxHvEzJCw==",
+      "size": 7776,
+      "publishedAt": "2026-10-05T22:39:30.899Z"
+    }
+  ],
+  "latestVersion": "1.0.1",
+  "updatedAt": "2026-10-05T22:39:30.899Z",
+  "featured": {
+    "order": 2
+  },
+  "popular": {
+    "order": 1
+  }
+}

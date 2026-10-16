@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:hud-layout:v1",
+  "title": "Vitrine HUD-Paket (hud.json)",
+  "description": "Schema fuer die Datei 'hud.json' eines HUD-Pakets (ROADMAP T5, Kategorie 'hud' in vitrine.schema.json). Ein HUD-Paket ist eine Liste rein deklarativer Widgets (Text, Icon, Balken, Liste) mit Anker, Pixel-Versatz, Skalierung und einer Sichtbarkeitsbedingung -- keine Skript-/Ausdruckssprache, keine Formel, keine Java-Referenz: jeder dynamische Wert kommt ausschliesslich aus der festen Datenquellen-Enum '$defs/dataSource' (u. a. 'fps', 'coordinates.x/y/z', 'biome', 'time'). Charter-Regel 3 ('Klasse A fuehrt keinen Code aus'): das ganze Schema bleibt eine geschlossene, aufzaehlbare Menge von Widget-Typen/Feldern/Bedingungen, additionalProperties ist ueberall false. Charter-Regel 8 ('ein Schema, zwei Seiten'): Designer (D5, HUD-Editor) und Mod (Java-Renderer) lesen dieselbe Datei unter registry/schema/hud.schema.json, kein zweites Format. Charter-Regel 10: kein $ref auf eine URL, die $id ist eine urn:-Kennung ohne Netzbezug. WICHTIG -- Umfang dieser Datei: dies ist nur die Schema-Haelfte von T5. Die Laufzeit im Mod (Java liest hud.json, rendert die Widgets tatsaechlich auf den Bildschirm, damit 'ein HUD-Paket FPS und Koordinaten zeigt, ohne eine Zeile Java im Paket') folgt als eigene, spaetere Teil-Aufgabe (coder-mod) und ist hier absichtlich NICHT enthalten -- dieses Schema beweist nur, dass ein solches HUD-Paket sich rein deklarativ ausdruecken laesst (siehe examples/hud/valid/fps-and-coordinates.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "widgets"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses HUD-Schemas selbst. Aktuell fest auf 1 -- steigt nur bei einer inkompatiblen Aenderung dieses Schemas.",
+      "type": "integer",
+      "const": 1
+    },
+    "widgets": {
+      "description": "Liste der HUD-Widgets dieses Pakets, in Zeichenreihenfolge (spaeter gezeichnete Widgets liegen ueber frueheren). Jede 'id' sollte innerhalb eines Pakets eindeutig sein -- diese Eindeutigkeit ist eine Laufzeitpruefung des Mod-Parsers, JSON Schema kann sie fuer ein Unterfeld eines Array-Elements nicht ausdruecken.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/widget" }
+    }
+  },
+  "$defs": {
+    "widgetId": {
+      "description": "Bezeichner eines Widgets innerhalb des Pakets (fuer T6, den HUD-Editor im Spiel: Position pro Id merken). Nur Kleinbuchstaben, Ziffern, Bindestrich, beginnt mit einem Buchstaben.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "anchor": {
+      "description": "Bildschirmecke/-kante, relativ zu der 'offset' gemessen wird. Feste Enum, keine freien Prozent-/Pixelkoordinaten der Bildschirmposition selbst.",
+      "type": "string",
+      "enum": [
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "top-center",
+        "bottom-center",
+        "center"
+      ]
+    },
+    "offset": {
+      "description": "Versatz in Pixeln (unskaliert) vom gewaehlten Anker aus. Negative Werte verschieben von rechten/unteren Ankern aus gesehen weiter nach aussen.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": -4096, "maximum": 4096 },
+        "y": { "type": "integer", "minimum": -4096, "maximum": 4096 }
+      }
+    },
+    "scale": {
+      "description": "Skalierungsfaktor des Widgets (1.0 = Originalgroesse). Begrenzt auf ein sinnvolles Fenster, damit kein Widget den Bildschirm sprengt oder auf 0 verschwindet.",
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 3.0
+    },
+    "dataSource": {
+      "description": "Feste Whitelist erlaubter dynamischer Werte -- keine freie Formel, kein Skript (Charter-Regel 3). Jeder Wert wird vom Mod-Renderer aus dem Spielzustand gelesen, niemals aus Paket-Code.",
+      "type": "string",
+      "enum": [
+        "fps",
+        "coordinates.x",
+        "coordinates.y",
+        "coordinates.z",
+        "biome",
+        "time"
+      ]
+    },
+    "visibility": {
+      "description": "Sichtbarkeitsbedingung des Widgets. Feste, aufzaehlbare Menge von Bedingungstypen mit je eigenen, ebenfalls festen Parametern -- keine freie Ausdruckssprache. Fehlt dieses Feld an einem Widget, gilt 'always' (immer sichtbar).",
+      "oneOf": [
+        {
+          "description": "Immer sichtbar, keine Bedingung.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "always" }
+          }
+        },
+        {
+          "description": "Nur sichtbar, wenn der Spieler sich in der angegebenen Dimension befindet.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "dimension"],
+          "properties": {
+            "type": { "const": "dimension" },
+            "dimension": {
+              "description": "Dimensions-Id im Minecraft-Resource-Location-Format 'namespace:pfad', z. B. 'minecraft:overworld', 'minecraft:the_nether', 'minecraft:the_end'. Kein Ausdruck, nur eine Id -- der Mod-Renderer vergleicht sie exakt mit der aktuellen Dimension.",
+              "type": "string",
+              "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$",
+              "maxLength": 128
+            }
+          }
+        },
+        {
+          "description": "Nur sichtbar, wenn der Vanilla-Debug-Bildschirm (F3) den angegebenen Zustand hat.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "debugScreen"],
+          "properties": {
+            "type": { "const": "debugScreen" },
+            "debugScreen": {
+              "type": "string",
+              "enum": ["on", "off"]
+            }
+          }
+        },
+        {
+          "description": "Nur sichtbar, wenn kein Bildschirm/Menue (Inventar, Chat, Pause, ...) geoeffnet ist.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": { "const": "outsideMenu" }
+          }
+        }
+      ]
+    },
+    "textContent": {
+      "description": "Inhalt eines Text-Widgets oder eines Listeneintrags: entweder ein fester Text ('static') oder ein aus 'dataSource' gelesener Wert ('dynamic'), optional mit vorangestelltem Label und Nachkommastellen fuer Zahlen. 'label' ist reiner, fester Text (Praefix) -- kein Platzhalter/Template, keine Interpolation, keine Formel.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": { "const": "static" },
+            "value": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source"],
+          "properties": {
+            "kind": { "const": "dynamic" },
+            "source": { "$ref": "#/$defs/dataSource" },
+            "label": {
+              "description": "Fester Text vor dem Wert, z. B. 'FPS: ' oder 'X: '.",
+              "type": "string",
+              "maxLength": 40
+            },
+            "decimals": {
+              "description": "Nachkommastellen bei numerischen Quellen (z. B. Koordinaten). Ohne Angabe entscheidet der Mod-Renderer ueber eine sinnvolle Default-Genauigkeit.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          }
+        }
+      ]
+    },
+    "widget": {
+      "description": "Ein einzelnes HUD-Widget. 'type' bestimmt die feste, aufzaehlbare Menge zusaetzlich erlaubter Felder -- kein Widget-Typ ausserhalb dieser vier.",
+      "oneOf": [
+        { "$ref": "#/$defs/widgetText" },
+        { "$ref": "#/$defs/widgetIcon" },
+        { "$ref": "#/$defs/widgetBar" },
+        { "$ref": "#/$defs/widgetList" }
+      ]
+    },
+    "widgetText": {
+      "description": "Textzeile, statisch oder dynamisch (z. B. FPS-Anzeige).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "anchor", "content"],
+      "properties": {
+        "id": { "$ref": "#/$defs/widgetId" },
+        "type": { "const": "text" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "offset": { "$ref": "#/$defs/offset" },
+        "scale": { "$ref": "#/$defs/scale" },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "content": { "$ref": "#/$defs/textContent" }
+      }
+    },
+    "widgetIcon": {
+      "description": "Referenz auf eine Textur/Sprite aus dem Paket (relativer Pfad, gleiche Pfadregeln wie 'icon' in vitrine.schema.json -- kein absoluter Pfad, kein '..').",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "anchor", "texture"],
+      "properties": {
+        "id": { "$ref": "#/$defs/widgetId" },
+        "type": { "const": "icon" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "offset": { "$ref": "#/$defs/offset" },
+        "scale": { "$ref": "#/$defs/scale" },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "texture": {
+          "description": "Relativer Pfad (innerhalb des .vpkg-ZIPs) zu einer PNG-Textur.",
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+\\.png$",
+          "maxLength": 256
+        },
+        "width": { "description": "Zielbreite in Pixeln (unskaliert).", "type": "integer", "minimum": 1, "maximum": 512 },
+        "height": { "description": "Zielhoehe in Pixeln (unskaliert).", "type": "integer", "minimum": 1, "maximum": 512 }
+      }
+    },
+    "widgetBar": {
+      "description": "Balken/Fortschrittsanzeige fuer einen einzelnen dynamischen Wert, normiert ueber 'min'/'max' (Default 0/1, falls weggelassen).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "anchor", "source"],
+      "properties": {
+        "id": { "$ref": "#/$defs/widgetId" },
+        "type": { "const": "bar" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "offset": { "$ref": "#/$defs/offset" },
+        "scale": { "$ref": "#/$defs/scale" },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "source": { "$ref": "#/$defs/dataSource" },
+        "min": { "description": "Wert, der einem leeren Balken entspricht. Default 0.", "type": "number" },
+        "max": { "description": "Wert, der einem vollen Balken entspricht. Default 1.", "type": "number" },
+        "width": { "description": "Balkenlaenge in Pixeln (unskaliert).", "type": "integer", "minimum": 1, "maximum": 1024 },
+        "height": { "description": "Balkenhoehe in Pixeln (unskaliert).", "type": "integer", "minimum": 1, "maximum": 64 },
+        "color": {
+          "description": "Fuellfarbe des Balkens, solide Hex-Farbe.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      }
+    },
+    "widgetList": {
+      "description": "Mehrere Eintraege untereinander (z. B. eine Koordinaten- oder Statusliste), je Eintrag ein 'textContent'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "anchor", "entries"],
+      "properties": {
+        "id": { "$ref": "#/$defs/widgetId" },
+        "type": { "const": "list" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "offset": { "$ref": "#/$defs/offset" },
+        "scale": { "$ref": "#/$defs/scale" },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/textContent" }
+        }
+      }
+    }
+  }
+}

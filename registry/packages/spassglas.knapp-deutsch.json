@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.knapp-deutsch",
+  "name": "Knapp-Deutsch",
+  "category": "sprache",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "description": "Kurze deutsche Menütexte: Allein, Zusammen, Weiter -- statt der langen Originale. Ohne Neustart.",
+  "license": "CC-BY-4.0",
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/knapp-deutsch/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/knapp-deutsch-v1.0.0/knapp-deutsch.vpkg",
+      "sha256": "1dde5ec46b58268f8c3a806d20cab5b9c86fc54281c3af141bfd135bf1a5eaac",
+      "signature": "EI4Zgf+FTAYVqE06xBzY4BogRcNQi8kr10frTgDAfKNKLV5avQuWUwvcLGbEcjyPhLlKhV+pDhwp/GK+kN8tDQ==",
+      "size": 900,
+      "publishedAt": "2026-10-04T09:49:21Z"
+    },
+    {
+      "version": "1.0.1",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/knapp-deutsch-v1.0.1/knapp-deutsch.vpkg",
+      "sha256": "e89a78bf550b0ec1ebc87c6580013e6e4112d0a4fc6816377054ab55d0c2f88c",
+      "signature": "JmMGRLZyEnbwWo3dRwHIagI0ti5NKlrUrBG18vDUK5JcnVqR3Qs85XVM0ce0rZHEWNTeN6bmGhRl48+GYt1XDw==",
+      "size": 6929,
+      "publishedAt": "2026-10-05T22:39:30.870Z"
+    }
+  ],
+  "latestVersion": "1.0.1",
+  "updatedAt": "2026-10-05T22:39:30.870Z",
+  "tags": [
+    "sprache",
+    "deutsch",
+    "menue"
+  ]
+}

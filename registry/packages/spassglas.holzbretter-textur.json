@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.holzbretter-textur",
+  "name": "Holzbretter",
+  "category": "texturen",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "description": "Platzhalter-Holzbretter in drei Brauntoenen -- Eiche, Fichte, Birke. Ersetzt vanilla, bis ein handgezeichnetes Set nachkommt.",
+  "tags": [
+    "holz",
+    "bretter"
+  ],
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/holzbretter-textur/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "license": "CC-BY-4.0",
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/holzbretter-textur-v1.0.0/holzbretter-textur.vpkg",
+      "sha256": "846dee5598b69b6a0847f48b7c9cfeaa5c10eec9e1eb6ec89bde815425112ecf",
+      "signature": "E+qdfn6PlD+ci3189024fAgPZvWgNn9GvooGzsdQ9l0rTfCBimxTM27w00GbSfEl9EY4vC2Ail3Av5ab7IuZAQ==",
+      "size": 1421,
+      "publishedAt": "2026-10-04T12:15:50.496Z"
+    },
+    {
+      "version": "1.0.1",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/holzbretter-textur-v1.0.1/holzbretter-textur.vpkg",
+      "sha256": "cdbeeede08b5f88f9962c177573a7d9ac8787bfa2a02784308fb87ae5e41b5f5",
+      "signature": "xuCLSDrJSdiNsorEMQRJoffp0Ypra1V5D16WEE8M7MWS45DTk4Y/QSXrITFlcfCrKemvmc0GJgeQQLCDozn6Ag==",
+      "size": 7452,
+      "publishedAt": "2026-10-05T22:39:30.851Z"
+    }
+  ],
+  "latestVersion": "1.0.1",
+  "updatedAt": "2026-10-05T22:39:30.851Z"
+}

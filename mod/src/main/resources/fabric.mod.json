@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "vitrine",
+  "icon": "assets/vitrine/icon.png",
+  "version": "${version}",
+  "name": "Vitrine",
+  "description": "A free in-game marketplace for Minecraft: browse texture packs, shaders, themes, HUD modules, sounds, languages, Lua/JavaScript add-ons and Modrinth content, install with one click, most of it without a restart.",
+  "contact": {
+    "homepage": "https://github.com/umgekocht/vitrine-mod",
+    "sources": "https://github.com/umgekocht/vitrine-mod",
+    "issues": "https://github.com/umgekocht/vitrine-mod/issues"
+  },
+  "authors": [
+    "umgekocht"
+  ],
+  "license": "Apache-2.0",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "de.spassglas.vitrine.Vitrine",
+      "de.spassglas.vitrine.platform.VitrinePlatform"
+    ]
+  },
+  "mixins": [
+    "vitrine.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

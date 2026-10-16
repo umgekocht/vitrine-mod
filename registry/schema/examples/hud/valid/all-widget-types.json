@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "clock",
+      "type": "text",
+      "anchor": "top-right",
+      "offset": { "x": -4, "y": 4 },
+      "content": { "kind": "dynamic", "source": "time" }
+    },
+    {
+      "id": "biome-icon",
+      "type": "icon",
+      "anchor": "top-center",
+      "offset": { "x": 0, "y": 4 },
+      "scale": 1.5,
+      "texture": "textures/gui/biome-marker.png",
+      "width": 16,
+      "height": 16,
+      "visibility": { "type": "debugScreen", "debugScreen": "off" }
+    },
+    {
+      "id": "experience-bar",
+      "type": "bar",
+      "anchor": "bottom-center",
+      "offset": { "x": 0, "y": -20 },
+      "source": "fps",
+      "min": 0,
+      "max": 144,
+      "width": 120,
+      "height": 6,
+      "color": "#3a6ff0",
+      "visibility": { "type": "dimension", "dimension": "minecraft:overworld" }
+    },
+    {
+      "id": "static-label",
+      "type": "list",
+      "anchor": "center",
+      "entries": [
+        { "kind": "static", "value": "Vitrine HUD-Beispiel" },
+        { "kind": "dynamic", "source": "biome" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+name: Index-Bau
+
+# Baut den Katalog-Index (index/v1/*) aus packages/ neu und committet das
+# Ergebnis zurueck auf 'main', wenn sich etwas geaendert hat. Laeuft nach
+# jedem Merge, der packages/ oder den Builder aendert, sowie manuell.
+# K7 (spaeter, eigenes Ticket) schaltet dieses Repo als 'vitrine-registry'
+# live -- dieser Workflow ist bereits Teil des Repo-Inhalts, wird aber erst
+# scharf, sobald das Repo tatsaechlich existiert und gepusht ist.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "schema/**"
+      - "build-index.js"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch: {}
+
+# Minimal und explizit: dieser Workflow committet generierte Dateien zurueck
+# in dasselbe Repo, braucht dafuer 'contents: write' -- sonst nichts (kein
+# Zugriff auf Issues, Actions, Packages, Secrets etc.).
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Abhaengigkeiten installieren
+        run: npm ci
+
+      - name: Manifest- und Paket-Pruefung vor dem Bau (dieselben Schritte wie pr-check.yml)
+        run: |
+          node schema/validate-examples.mjs
+          node --test test/*.test.mjs
+
+      - name: Index bauen (index/v1/*)
+        run: node build-index.js --packages packages --out .
+
+      - name: Aenderungen erkennen
+        id: diff
+        run: |
+          if git status --porcelain index/v1 | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Index committen und pushen
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "vitrine-registry-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index/v1
+          git commit -m "Index neu gebaut aus packages/"
+          git push

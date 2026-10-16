@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "fps-counter",
+      "type": "text",
+      "anchor": "top-left",
+      "offset": { "x": 4, "y": 4 },
+      "scale": 1.0,
+      "visibility": { "type": "always" },
+      "content": {
+        "kind": "dynamic",
+        "source": "fps",
+        "label": "FPS: ",
+        "decimals": 0
+      }
+    },
+    {
+      "id": "coordinates-list",
+      "type": "list",
+      "anchor": "bottom-left",
+      "offset": { "x": 4, "y": -4 },
+      "scale": 1.0,
+      "visibility": { "type": "outsideMenu" },
+      "entries": [
+        { "kind": "dynamic", "source": "coordinates.x", "label": "X: ", "decimals": 1 },
+        { "kind": "dynamic", "source": "coordinates.y", "label": "Y: ", "decimals": 1 },
+        { "kind": "dynamic", "source": "coordinates.z", "label": "Z: ", "decimals": 1 }
+      ]
+    }
+  ]
+}

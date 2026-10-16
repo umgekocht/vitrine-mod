@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.ohne-pruefsumme",
+  "name": "Ohne Pruefsumme",
+  "version": "1.0.0",
+  "category": "hud",
+  "contentClass": "javamod",
+  "hotApply": false,
+  "javaMod": {
+    "loader": "fabric",
+    "minecraftVersions": [
+      "1.21.1"
+    ],
+    "jar": {
+      "fileName": "ohne-pruefsumme-1.0.0.jar",
+      "size": 20480
+    }
+  },
+  "author": "Vitrine-Testfixture",
+  "license": "MIT"
+}

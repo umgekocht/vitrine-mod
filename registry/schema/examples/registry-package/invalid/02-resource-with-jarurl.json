@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.resource-falsches-feld",
+  "name": "Resource mit falschem Feld",
+  "category": "hud",
+  "author": {
+    "name": "Vitrine-Testfixture"
+  },
+  "license": "MIT",
+  "repository": "https://example.com/vitrine-testfixture/resource-falsches-feld",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "jarUrl": "https://example.com/vitrine-testfixture/resource-falsches-feld/releases/download/v1.0.0/resource-falsches-feld.jar",
+      "fileName": "resource-falsches-feld.jar",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "signature": "cUUn6jiavQB8sqnWFcXQvmZWp/yQEp1h1sAuHnW0fCGQkYh8q2I6cv8covRmS3g4bJS5VWl4zeQ6c54ilFrkZQ==",
+      "size": 1024,
+      "publishedAt": "2026-09-24T00:00:00.000Z"
+    }
+  ],
+  "latestVersion": "1.0.0",
+  "updatedAt": "2026-09-24T00:00:00.000Z"
+}

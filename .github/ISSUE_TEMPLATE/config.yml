@@ -1,0 +1,12 @@
+# Blank issues sind aus: die zwei Vorlagen fragen genau die Angaben ab, ohne
+# die ein Bug-Bericht (Version, MC/Fabric, Log, betroffenes Paket) meist nicht
+# bearbeitbar ist. Wer wirklich nichts Passendes findet, nimmt "Feature request"
+# oder eine der Diskussions-Links unten.
+blank_issues_enabled: false
+contact_links:
+  - name: Doku lesen (Installieren, Paket bauen, veröffentlichen)
+    url: https://github.com/umgekocht/vitrine-mod/tree/main/docs
+    about: Die meisten "Wie mache ich …"-Fragen sind hier beantwortet.
+  - name: Frage zum Katalog / eigenen Paketen
+    url: https://github.com/umgekocht/vitrine-registry
+    about: Paket-Einträge und Katalog-Format werden im Registry-Repo betreut.

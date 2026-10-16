@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "fps-counter",
+      "type": "text",
+      "anchor": "middle-left",
+      "content": { "kind": "dynamic", "source": "fps" }
+    }
+  ]
+}

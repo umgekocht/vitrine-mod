@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "hacked-widget",
+      "type": "text",
+      "anchor": "top-left",
+      "content": { "kind": "dynamic", "source": "player.x * 2 + 1" }
+    }
+  ]
+}

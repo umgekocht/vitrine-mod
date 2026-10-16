@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.getarnte-jar",
+  "name": "Getarnte Jar",
+  "version": "1.0.0",
+  "category": "texturen",
+  "hotApply": true,
+  "javaMod": {
+    "loader": "fabric",
+    "minecraftVersions": [
+      "1.21.1"
+    ],
+    "jar": {
+      "fileName": "getarnt.jar",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "size": 20480
+    }
+  },
+  "author": "Vitrine-Testfixture",
+  "license": "CC0-1.0"
+}

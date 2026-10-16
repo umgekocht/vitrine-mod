@@ -1,0 +1,50 @@
+name: PR-Pruefung
+
+# Laeuft bei jedem Pull-Request, der packages/, das Schema oder den
+# Index-Builder aendert. Rein lesend: validiert, veroeffentlicht nichts.
+# Siehe registry/scripts/dry-run.mjs fuer den lokalen Trockenlauf derselben
+# Schritte (M4/K6).
+on:
+  pull_request:
+    paths:
+      - "packages/**"
+      - "schema/**"
+      - "build-index.js"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pr-check.yml"
+
+# Minimal und explizit (Charter/AGENT.md-Vorgabe): dieser Workflow liest nur,
+# schreibt nichts im Repo und braucht daher ausschliesslich 'contents: read'.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Abhaengigkeiten installieren
+        run: npm ci
+
+      - name: Paket-Manifest-Beispiele gegen vitrine.schema.json pruefen
+        run: node schema/validate-examples.mjs
+
+      - name: Automatisierte Tests (Index-Builder)
+        run: node --test test/*.test.mjs
+
+      - name: Geaenderte packages/<id>.json gegen registry-package.schema.json pruefen
+        run: node scripts/validate-changed-packages.mjs
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.sha }}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "player-video",
+      "type": "video",
+      "anchor": "top-left"
+    }
+  ]
+}

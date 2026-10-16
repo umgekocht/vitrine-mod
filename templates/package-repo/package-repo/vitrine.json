@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "dein-name.dein-erstes-paket",
+  "name": "Mein erstes Vitrine-Paket",
+  "version": "0.1.0",
+  "category": "texturen",
+  "author": "Dein Name",
+  "description": "Ersetze diese Beschreibung, sobald du echte Ressourcen eingefuegt hast.",
+  "license": "CC0-1.0"
+}

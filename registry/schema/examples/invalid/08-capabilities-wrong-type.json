@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.capsfalschertyp",
+  "name": "Capabilities falscher Typ",
+  "version": "1.0.0",
+  "category": "hud",
+  "author": "Vitrine-Testfixture",
+  "capabilities": "hud.read"
+}

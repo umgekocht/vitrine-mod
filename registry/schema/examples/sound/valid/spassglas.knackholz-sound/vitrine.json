@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.knackholz-sound",
+  "name": "Knackholz",
+  "version": "1.0.0",
+  "category": "sound",
+  "author": "Spassglas Studio",
+  "description": "Beispiel-Soundpaket: ersetzt das Klick-Geraeusch der UI-Knoepfe (ui.button.click). Zeigt den Aufbau eines .vpkg der Kategorie 'sound' -- assets/minecraft/sounds.json weist ein bestehendes Sound-Event einer eigenen .ogg-Datei zu.",
+  "capabilities": [
+    "sound"
+  ],
+  "license": "CC0-1.0"
+}

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Vitrine Designer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Vitrine Designer -- externe Software zum Bauen von .vpkg-Paketen fuer Vitrine, ohne Build-Schritt, direkt im Browser geoeffnet.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="brand">Vitrine Designer</div>
+    <div class="brand-sub">Pakete bauen, ohne Build-Schritt -- diese Seite laeuft direkt aus der Datei</div>
+  </header>
+
+  <div class="app-body">
+
+    <aside class="sidebar" aria-label="Abschnitte">
+      <div class="sidebar-title">Abschnitte</div>
+      <ul class="section-list">
+        <li class="section-item">
+          <button id="nav-manifest" type="button" class="section-nav-btn" aria-current="false" disabled>
+            <span class="section-name">Manifest</span>
+          </button>
+        </li>
+        <li class="section-item">
+          <button id="nav-theme" type="button" class="section-nav-btn" aria-current="false" disabled>
+            <span class="section-name">Theme</span>
+          </button>
+        </li>
+        <li class="section-item">
+          <button id="nav-texture" type="button" class="section-nav-btn" aria-current="false" disabled>
+            <span class="section-name">Texturen</span>
+          </button>
+        </li>
+        <li class="section-item">
+          <button id="nav-hud" type="button" class="section-nav-btn" aria-current="false" disabled>
+            <span class="section-name">HUD</span>
+          </button>
+        </li>
+        <li class="section-item">
+          <button id="nav-export" type="button" class="section-nav-btn" aria-current="false" disabled>
+            <span class="section-name">Export</span>
+          </button>
+        </li>
+      </ul>
+      <p class="sidebar-note">Diese Liste zeigt, was spaeter hier andockt. Nichts davon ist funktional -- ehrlich beschriftet statt vorgetaeuscht.</p>
+    </aside>
+
+    <main class="content">
+
+      <section class="panel project-panel" aria-labelledby="project-heading">
+        <h1 id="project-heading" class="panel-title">Projekt</h1>
+
+        <div id="project-empty" class="project-current">
+          <p>Kein Projekt geoeffnet.</p>
+        </div>
+
+        <div id="project-open" class="project-current" hidden>
+          <p class="project-open-label">Geoeffnet:</p>
+          <p id="project-open-name" class="project-open-name"></p>
+          <p id="project-open-meta" class="project-open-meta"></p>
+        </div>
+
+        <div class="project-actions">
+          <button id="btn-new-project" type="button" class="btn btn-primary">Neues Projekt</button>
+          <button id="btn-load-project" type="button" class="btn">Projekt laden</button>
+          <button id="btn-close-project" type="button" class="btn" hidden>Schliessen</button>
+        </div>
+
+        <form id="new-project-form" class="inline-form" hidden>
+          <label for="project-name-input">Projektname</label>
+          <input id="project-name-input" name="project-name" type="text" maxlength="80" required autocomplete="off">
+          <div class="inline-form-actions">
+            <button id="btn-create-project" type="submit" class="btn btn-primary">Anlegen</button>
+            <button id="btn-cancel-new" type="button" class="btn">Abbrechen</button>
+          </div>
+          <p id="new-project-error" class="form-error" role="alert" hidden></p>
+        </form>
+
+        <div id="project-list-wrap" class="inline-form" hidden>
+          <p class="inline-form-label">Gespeicherte Projekte (in diesem Browser):</p>
+          <ul id="project-list" class="project-list"></ul>
+          <p id="project-list-empty" class="project-list-empty" hidden>Noch keine Projekte gespeichert.</p>
+          <div class="inline-form-actions">
+            <button id="btn-cancel-load" type="button" class="btn">Schliessen</button>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="editor-placeholder" class="panel editor-placeholder" aria-labelledby="editor-heading">
+        <h2 id="editor-heading" class="panel-title">Editor-Bereich</h2>
+        <p>Hier docken die Editoren an, sobald ein Projekt geoeffnet ist: Manifest-Formular (D2), Theme-Editor (D3), Texture-Studio (D4), HUD-Editor (D5) und Export (D6). Alle sind links waehlbar, sobald ein Projekt geoeffnet ist.</p>
+      </section>
+
+      <section id="manifest-panel" class="panel manifest-panel" aria-labelledby="manifest-heading" hidden>
+        <h2 id="manifest-heading" class="panel-title">Manifest (vitrine.json)</h2>
+        <p id="manifest-summary" class="manifest-summary" role="status" aria-live="polite"></p>
+
+        <form id="manifest-form" novalidate>
+
+          <div class="field" data-field="schemaVersion">
+            <label id="manifest-label-schemaVersion" for="manifest-field-schemaVersion">schemaVersion</label>
+            <p class="field-help">Version dieses Manifest-Schemas, aktuell immer 1.</p>
+            <input id="manifest-field-schemaVersion" name="schemaVersion" type="text" inputmode="numeric" autocomplete="off">
+            <div id="manifest-error-schemaVersion" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="id">
+            <label id="manifest-label-id" for="manifest-field-id">id</label>
+            <p class="field-help">Eindeutiger Namespace-Bezeichner, z. B. "autor.paketname".</p>
+            <input id="manifest-field-id" name="id" type="text" autocomplete="off">
+            <div id="manifest-error-id" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="name">
+            <label id="manifest-label-name" for="manifest-field-name">name</label>
+            <p class="field-help">Anzeigename des Pakets im Store.</p>
+            <input id="manifest-field-name" name="name" type="text" autocomplete="off">
+            <div id="manifest-error-name" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="version">
+            <label id="manifest-label-version" for="manifest-field-version">version</label>
+            <p class="field-help">Semantic Versioning 2.0.0, z. B. "1.0.0".</p>
+            <input id="manifest-field-version" name="version" type="text" autocomplete="off">
+            <div id="manifest-error-version" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="category">
+            <label id="manifest-label-category" for="manifest-field-category">category</label>
+            <p class="field-help">Marktplatz-Kategorie (Vorschlaege in der Liste, freie Eingabe wird live geprueft).</p>
+            <input id="manifest-field-category" name="category" type="text" list="manifest-category-options" autocomplete="off">
+            <datalist id="manifest-category-options"></datalist>
+            <div id="manifest-error-category" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="contentClass">
+            <label id="manifest-label-contentClass" for="manifest-field-contentClass">contentClass</label>
+            <p class="field-help">Inhaltsklasse. <strong>Klasse A (resource)</strong> ist der Normalfall: Texturen, Themes, HUD, Sounds, Sprachen &ndash; wirkt sofort, ohne Neustart. <strong>Klasse B (javamod)</strong> ist ein Java-Mod als <code>.jar</code>: wird nach <code>mods/</code> gelegt und laeuft erst nach einem Neustart. Leer lassen heisst Klasse A.</p>
+            <select id="manifest-field-contentClass" name="contentClass">
+              <option value="">(leer = resource, Klasse A)</option>
+              <option value="resource">resource &ndash; Klasse A, wirkt sofort</option>
+              <option value="javamod">javamod &ndash; Klasse B, Neustart noetig</option>
+            </select>
+            <div id="manifest-error-contentClass" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div id="manifest-classb-notice" class="classb-notice" role="note" hidden>
+            <p class="classb-notice-title">Klasse B: dieses Paket braucht einen Neustart.</p>
+            <p>
+              Java-Code laesst sich in Minecraft nicht nachladen &ndash; die JVM laedt Klassen
+              einmal, Mixins werden beim Start eingespielt. Vitrine taeuscht das nicht vor:
+              die Karte im Store bekommt ein Band <em>&bdquo;Neustart noetig&ldquo;</em>, und die
+              <code>.jar</code> wird erst nach Pruefsumme und Signatur nach <code>mods/</code>
+              gelegt. Klasse B ist in den Einstellungen standardmaessig <strong>aus</strong> &ndash;
+              wer dein Paket sehen will, muss sie bewusst einschalten.
+            </p>
+            <p>
+              Die <code>.jar</code> liegt <strong>nicht</strong> im <code>.vpkg</code>, sondern wird
+              als eigenes Release-Asset veroeffentlicht. Die Felder unten beschreiben sie:
+              daraus baut <code>vitrine publish</code> den Katalog-Eintrag, und gegen genau diese
+              SHA&#8209;256 prueft der Mod die heruntergeladene Datei, bevor sie ihren Platz bekommt.
+              Details: <code>docs/klasse-b.md</code>.
+            </p>
+          </div>
+
+          <div class="field" data-field="hotApply">
+            <label id="manifest-label-hotApply" for="manifest-field-hotApply">hotApply</label>
+            <p class="field-help">Wirkt das Paket ohne Neustart? Klasse A: leer lassen oder <code>true</code>. Klasse B: muss <code>false</code> sein &ndash; aus diesem Feld speist sich das Band &bdquo;Neustart noetig&ldquo;.</p>
+            <select id="manifest-field-hotApply" name="hotApply">
+              <option value="">(leer = true, wirkt sofort)</option>
+              <option value="true">true &ndash; wirkt sofort</option>
+              <option value="false">false &ndash; Neustart noetig</option>
+            </select>
+            <div id="manifest-error-hotApply" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <fieldset id="manifest-classb-section" class="classb-section" hidden>
+            <legend>javaMod &ndash; Angaben zur <code>.jar</code> (nur Klasse B)</legend>
+
+            <div class="field" data-field="javaMod.loader">
+              <label id="manifest-label-javaMod.loader" for="manifest-field-javaMod.loader">javaMod.loader</label>
+              <p class="field-help">Mod-Loader, fuer den die <code>.jar</code> gebaut ist.</p>
+              <select id="manifest-field-javaMod.loader" name="javaMod.loader">
+                <option value="">(bitte waehlen)</option>
+                <option value="fabric">fabric</option>
+                <option value="quilt">quilt</option>
+              </select>
+              <div id="manifest-error-javaMod.loader" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.minecraftVersions">
+              <label id="manifest-label-javaMod.minecraftVersions" for="manifest-field-javaMod.minecraftVersions">javaMod.minecraftVersions</label>
+              <p class="field-help">Eine Minecraft-Version pro Zeile, z. B. <code>1.21.1</code>. Mindestens eine. Der Store bietet das Paket nicht an, wenn die laufende Version fehlt.</p>
+              <textarea id="manifest-field-javaMod.minecraftVersions" name="javaMod.minecraftVersions" rows="3" placeholder="1.21.1"></textarea>
+              <div id="manifest-error-javaMod.minecraftVersions" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.modId">
+              <label id="manifest-label-javaMod.modId" for="manifest-field-javaMod.modId">javaMod.modId</label>
+              <p class="field-help">Optional: die Mod-Id aus der <code>fabric.mod.json</code> deiner Jar. Verhindert, dass dieselbe Mod zweimal gestagt wird.</p>
+              <input id="manifest-field-javaMod.modId" name="javaMod.modId" type="text" autocomplete="off">
+              <div id="manifest-error-javaMod.modId" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.dependencies">
+              <label id="manifest-label-javaMod.dependencies" for="manifest-field-javaMod.dependencies">javaMod.dependencies</label>
+              <p class="field-help">Optional, eine Mod-Id pro Zeile: harte Abhaengigkeiten, die vorher da sein muessen (z. B. <code>fabric-api</code>).</p>
+              <textarea id="manifest-field-javaMod.dependencies" name="javaMod.dependencies" rows="2" placeholder="fabric-api"></textarea>
+              <div id="manifest-error-javaMod.dependencies" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.jar.fileName">
+              <label id="manifest-label-javaMod.jar.fileName" for="manifest-field-javaMod.jar.fileName">javaMod.jar.fileName</label>
+              <p class="field-help">Dateiname in <code>mods/</code>, z. B. <code>leuchtkompass-1.0.0.jar</code>. Kein Pfad, kein <code>..</code>, endet auf <code>.jar</code>.</p>
+              <input id="manifest-field-javaMod.jar.fileName" name="javaMod.jar.fileName" type="text" placeholder="meinmod-1.0.0.jar" autocomplete="off">
+              <div id="manifest-error-javaMod.jar.fileName" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.jar.sha256">
+              <label id="manifest-label-javaMod.jar.sha256" for="manifest-field-javaMod.jar.sha256">javaMod.jar.sha256</label>
+              <p class="field-help">SHA&#8209;256 der Jar, 64 Zeichen hex, klein geschrieben. Pflicht: ohne Pruefsumme wird die Datei nie gestagt.</p>
+              <input id="manifest-field-javaMod.jar.sha256" name="javaMod.jar.sha256" type="text" autocomplete="off" spellcheck="false">
+              <div id="manifest-error-javaMod.jar.sha256" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div class="field" data-field="javaMod.jar.size">
+              <label id="manifest-label-javaMod.jar.size" for="manifest-field-javaMod.jar.size">javaMod.jar.size</label>
+              <p class="field-help">Groesse der Jar in Bytes.</p>
+              <input id="manifest-field-javaMod.jar.size" name="javaMod.jar.size" type="text" inputmode="numeric" autocomplete="off">
+              <div id="manifest-error-javaMod.jar.size" class="field-errors" role="alert" aria-live="polite"></div>
+            </div>
+          </fieldset>
+
+          <div class="field" data-field="author">
+            <label id="manifest-label-author" for="manifest-field-author">author</label>
+            <p class="field-help">Name oder Handle des Autors/der Autorin.</p>
+            <input id="manifest-field-author" name="author" type="text" autocomplete="off">
+            <div id="manifest-error-author" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="description">
+            <label id="manifest-label-description" for="manifest-field-description">description</label>
+            <p class="field-help">Freitext-Beschreibung fuer die Detailseite im Store (optional).</p>
+            <textarea id="manifest-field-description" name="description" rows="4"></textarea>
+            <div id="manifest-error-description" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="capabilities">
+            <label id="manifest-label-capabilities" for="manifest-field-capabilities">capabilities</label>
+            <p class="field-help">Ein Eintrag pro Zeile (optional). Erlaubt sind genau diese sieben Werte: texturen, theme, hud, shader, sound, sprache, cosmetics.</p>
+            <textarea id="manifest-field-capabilities" name="capabilities" rows="3" placeholder="hud"></textarea>
+            <div id="manifest-error-capabilities" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="icon">
+            <label id="manifest-label-icon" for="manifest-field-icon">icon</label>
+            <p class="field-help">Relativer Pfad zu einem quadratischen PNG-Symbol (optional).</p>
+            <input id="manifest-field-icon" name="icon" type="text" placeholder="icon.png" autocomplete="off">
+            <div id="manifest-error-icon" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="screenshots">
+            <label id="manifest-label-screenshots" for="manifest-field-screenshots">screenshots</label>
+            <p class="field-help">Ein relativer Pfad pro Zeile, .png/.jpg/.jpeg (optional).</p>
+            <textarea id="manifest-field-screenshots" name="screenshots" rows="3" placeholder="screenshots/vorher.png"></textarea>
+            <div id="manifest-error-screenshots" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="homepage">
+            <label id="manifest-label-homepage" for="manifest-field-homepage">homepage</label>
+            <p class="field-help">Optionale https-Projektseite.</p>
+            <input id="manifest-field-homepage" name="homepage" type="text" placeholder="https://" autocomplete="off">
+            <div id="manifest-error-homepage" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div class="field" data-field="license">
+            <label id="manifest-label-license" for="manifest-field-license">license</label>
+            <p class="field-help">Lizenz-Kurzbezeichner von der Lizenz-Whitelist, z. B. "CC-BY-4.0" oder "CC0-1.0" (Pflichtfeld).</p>
+            <input id="manifest-field-license" name="license" type="text" autocomplete="off">
+            <div id="manifest-error-license" class="field-errors" role="alert" aria-live="polite"></div>
+          </div>
+
+        </form>
+      </section>
+
+      <section id="theme-panel" class="panel theme-panel" aria-labelledby="theme-heading" hidden>
+        <h2 id="theme-heading" class="panel-title">Theme</h2>
+        <p id="theme-summary" class="theme-summary" role="status" aria-live="polite">Aenderungen werden laufend gespeichert und links in der Vorschau angezeigt.</p>
+
+        <div class="theme-layout">
+
+          <div class="theme-editor-col">
+
+            <div class="theme-variant-tabs" role="tablist" aria-label="Theme-Variante">
+              <button id="theme-tab-light" type="button" class="theme-tab" role="tab" aria-selected="true" aria-controls="theme-fields-light">Hell</button>
+              <button id="theme-tab-dark" type="button" class="theme-tab" role="tab" aria-selected="false" aria-controls="theme-fields-dark">Dunkel</button>
+            </div>
+
+            <form id="theme-form" novalidate>
+              <div id="theme-fields-light" class="theme-fields" role="tabpanel" aria-labelledby="theme-tab-light"></div>
+              <div id="theme-fields-dark" class="theme-fields" role="tabpanel" aria-labelledby="theme-tab-dark" hidden></div>
+            </form>
+
+            <div class="theme-contrast">
+              <h3 id="theme-contrast-heading" class="theme-contrast-heading">Kontrastpruefung (aktive Variante, WCAG AA 4.5:1)</h3>
+              <ul id="theme-contrast-list" class="theme-contrast-list" aria-live="polite"></ul>
+            </div>
+
+          </div>
+
+          <div class="theme-preview-col">
+            <p class="theme-preview-label">Live-Vorschau (Mockup, keine Bedienelemente)</p>
+            <div id="theme-preview" class="theme-preview" aria-hidden="true">
+              <div class="theme-preview-header">
+                <div class="theme-preview-search">Suche</div>
+              </div>
+              <div class="theme-preview-body">
+                <div class="theme-preview-nav">
+                  <div class="theme-preview-nav-item is-active">Start</div>
+                  <div class="theme-preview-nav-item">Texturen</div>
+                  <div class="theme-preview-nav-item">Themes</div>
+                </div>
+                <div class="theme-preview-content">
+                  <div class="theme-preview-cards">
+                    <div class="theme-preview-card">
+                      <div class="theme-preview-card-image"></div>
+                      <p class="theme-preview-card-title">Beispielpaket</p>
+                      <p class="theme-preview-card-author">Autor</p>
+                    </div>
+                    <div class="theme-preview-card">
+                      <div class="theme-preview-card-image"></div>
+                      <p class="theme-preview-card-title">Zweites Paket</p>
+                      <p class="theme-preview-card-author">Autor</p>
+                    </div>
+                    <div class="theme-preview-card">
+                      <div class="theme-preview-card-image"></div>
+                      <p class="theme-preview-card-title">Drittes Paket</p>
+                      <p class="theme-preview-card-author">Autor</p>
+                    </div>
+                  </div>
+                  <div class="theme-preview-button">Installieren</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="texture-panel" class="panel texture-panel" aria-labelledby="texture-heading" hidden>
+        <h2 id="texture-heading" class="panel-title">Texturen</h2>
+        <p class="texture-summary">Vanilla-Original wird NICHT ausgeliefert (Charter-Regel 6) -- links steht deshalb immer ein neutraler Platzhalter, rechts die geladene Custom-Textur.</p>
+
+        <form id="texture-form" class="texture-form" novalidate>
+          <div class="field">
+            <label for="texture-file-input">PNG-Datei laden</label>
+            <p class="field-help">Wird nur im Browser gelesen (FileReader) -- nichts wird hochgeladen. Maximal 4096x4096 Pixel.</p>
+            <input id="texture-file-input" type="file" accept="image/png">
+          </div>
+
+          <div id="texture-pending-info" class="texture-pending-info" hidden>
+            <p id="texture-pending-meta" role="status" aria-live="polite"></p>
+            <p id="texture-pending-warning" class="texture-pending-warning" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="texture-target-input">Vanilla-Ziel-Pfad</label>
+            <p class="field-help">Relativer Pfad innerhalb des Ressourcen-Baums, z. B. "textures/block/stone.png". Vorschlaege in der Liste, freie Eingabe moeglich.</p>
+            <input id="texture-target-input" type="text" list="texture-target-options" placeholder="textures/block/stone.png" autocomplete="off">
+            <datalist id="texture-target-options">
+              <option value="textures/block/stone.png"></option>
+              <option value="textures/block/dirt.png"></option>
+              <option value="textures/block/oak_planks.png"></option>
+              <option value="textures/item/diamond.png"></option>
+              <option value="textures/gui/icons.png"></option>
+            </datalist>
+          </div>
+
+          <div id="texture-form-error" class="form-error" role="alert" aria-live="polite" hidden></div>
+
+          <div class="inline-form-actions">
+            <button id="btn-texture-add" type="submit" class="btn btn-primary">Zuordnen</button>
+          </div>
+        </form>
+
+        <div class="texture-layout">
+
+          <div class="texture-list-col">
+            <p class="texture-list-label">Zugeordnete Texturen in diesem Projekt:</p>
+            <ul id="texture-list" class="texture-list"></ul>
+            <p id="texture-list-empty" class="texture-list-empty">Noch keine Textur zugeordnet.</p>
+          </div>
+
+          <div class="texture-preview-col">
+            <p class="texture-preview-label">Vorher / Nachher</p>
+            <p id="texture-preview-empty" class="texture-preview-empty">Keine Textur ausgewaehlt -- in der Liste links auf einen Eintrag klicken.</p>
+            <div id="texture-preview-content" class="texture-preview-content-wrap" hidden>
+              <p id="texture-preview-path" class="texture-preview-path"></p>
+              <p id="texture-preview-dims" class="texture-preview-dims"></p>
+              <div class="texture-preview-pair">
+                <div class="texture-preview-half">
+                  <p class="texture-preview-half-label">Vorher (Vanilla-Platzhalter, kein Original-Asset)</p>
+                  <div class="texture-preview-placeholder" aria-hidden="true"></div>
+                </div>
+                <div class="texture-preview-half">
+                  <p class="texture-preview-half-label">Nachher (deine Custom-Textur)</p>
+                  <img id="texture-preview-after-img" class="texture-preview-after-img" alt="">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="hud-panel" class="panel hud-panel" aria-labelledby="hud-heading" hidden>
+        <h2 id="hud-heading" class="panel-title">HUD (hud.json)</h2>
+        <p id="hud-summary" class="hud-summary" role="status" aria-live="polite"></p>
+        <p class="hud-intro">Rein deklarative Widgets -- Anker, Versatz, Skalierung, Datenquelle aus einer festen Liste (keine Formel, kein Skript). Jede Eingabe wird sofort gegen dasselbe Schema geprueft, das der Mod liest (<code>registry/schema/hud.schema.json</code>).</p>
+
+        <div class="hud-layout">
+
+          <div class="hud-list-col">
+            <div class="hud-toolbar">
+              <label for="hud-add-type" class="hud-toolbar-label">Neues Widget</label>
+              <select id="hud-add-type" class="hud-select"></select>
+              <button id="btn-hud-add" type="button" class="btn btn-primary">Hinzufuegen</button>
+            </div>
+            <p class="hud-list-label">Widgets in Zeichenreihenfolge (spaeter gezeichnet = weiter oben):</p>
+            <ul id="hud-widget-list" class="hud-widget-list"></ul>
+            <p id="hud-widget-list-empty" class="hud-widget-list-empty">Noch kein Widget angelegt.</p>
+          </div>
+
+          <div class="hud-edit-col">
+            <form id="hud-form" class="hud-form" novalidate hidden>
+              <h3 id="hud-form-title" class="hud-form-title">Neues Widget</h3>
+              <div id="hud-form-fields" class="hud-form-fields"></div>
+
+              <fieldset id="hud-entries-group" class="hud-entries-group" hidden>
+                <legend>Listeneintraege</legend>
+                <p class="field-help">Je Eintrag ein fester Text oder ein Wert aus der Datenquellen-Liste.</p>
+                <ol id="hud-entries" class="hud-entries"></ol>
+                <button id="btn-hud-entry-add" type="button" class="btn">Eintrag hinzufuegen</button>
+                <div id="hud-error-entries" class="field-errors" role="alert" aria-live="polite"></div>
+              </fieldset>
+
+              <div id="hud-form-error" class="form-error" role="alert" aria-live="polite" hidden></div>
+              <div class="inline-form-actions">
+                <button id="btn-hud-save" type="submit" class="btn btn-primary">Widget speichern</button>
+                <button id="btn-hud-cancel" type="button" class="btn">Abbrechen</button>
+              </div>
+            </form>
+            <p id="hud-edit-hint" class="hud-edit-hint">In der Liste links auf ein Widget klicken, um es zu bearbeiten -- oder oben ein neues anlegen.</p>
+          </div>
+
+        </div>
+
+        <div class="hud-export">
+          <h3 class="hud-export-heading">hud.json (so liest es der Mod)</h3>
+          <textarea id="hud-export-json" class="hud-export-json" rows="12" readonly aria-label="Erzeugtes hud.json"></textarea>
+          <div class="hud-import">
+            <label for="hud-import-json">hud.json einfuegen und uebernehmen</label>
+            <textarea id="hud-import-json" class="hud-import-json" rows="4" placeholder='{ "schemaVersion": 1, "widgets": [ ... ] }'></textarea>
+            <div id="hud-import-error" class="form-error" role="alert" aria-live="polite" hidden></div>
+          </div>
+          <div class="inline-form-actions">
+            <a id="hud-download" class="btn btn-primary" download="hud.json">hud.json herunterladen</a>
+            <button id="btn-hud-import" type="button" class="btn">Eingefuegtes uebernehmen</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="export-panel" class="panel export-panel" aria-labelledby="export-heading" hidden>
+        <h2 id="export-heading" class="panel-title">Export (.vpkg)</h2>
+        <p class="export-summary">Baut aus Manifest und Texturen dieses Projekts ein fertiges <code>.vpkg</code>-Paket -- komplett im Browser (JSZip), nichts wird hochgeladen. Vor dem Bauen wird das Manifest gegen dasselbe Schema geprueft wie im Manifest-Formular (M1/P1) und jede Textur erneut gegen die Sicherheitsregeln aus M1/P3.</p>
+
+        <div class="inline-form-actions">
+          <button id="btn-export-build" type="button" class="btn btn-primary">Paket exportieren</button>
+        </div>
+
+        <div id="export-errors" class="export-errors" role="alert" aria-live="polite" hidden></div>
+
+        <div id="export-result" class="export-result" hidden>
+          <p class="export-result-ok">Paket erfolgreich gebaut.</p>
+          <p><span class="export-result-label">SHA-256:</span> <code id="export-sha256"></code></p>
+          <p class="export-note">Die Signatur (ed25519) kommt erst mit <code>cli/vitrine.js sign</code> (D7) dazu -- der Browser hat keinen Zugriff auf den lokalen Signierschluessel.</p>
+          <div class="inline-form-actions">
+            <a id="export-download-vpkg" class="btn btn-primary" download>.vpkg herunterladen</a>
+            <a id="export-download-sidecar" class="btn" download>Pruefsummen-Datei herunterladen</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <footer class="app-footer">
+    <span id="storage-warning" class="storage-warning" hidden>Dieser Browser speichert nichts dauerhaft (z. B. privates Fenster) -- Projekte gehen beim Schliessen verloren.</span>
+  </footer>
+
+</div>
+
+<script src="schema-data.js"></script>
+<script src="hud-schema-data.js"></script>
+<script src="schema-validate.js"></script>
+<script src="manifest-form.js"></script>
+<script src="hud-editor.js"></script>
+<script src="theme-tokens.js"></script>
+<script src="theme-editor.js"></script>
+<script src="theme-wiring.js"></script>
+<script src="texture-studio.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="vpkg-export.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

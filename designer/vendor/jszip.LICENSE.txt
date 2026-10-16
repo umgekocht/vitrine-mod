@@ -1,0 +1,152 @@
+JSZip v3.10.1
+<http://stuartk.com/jszip>
+
+The MIT License (MIT)
+
+Copyright (c) 2009-2016 Stuart Knightley <stuart [at] stuartk.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+---
+
+Anmerkung (Vitrine): JSZip ist dual-lizenziert (MIT oder GPLv3, "at your
+choice"). Vitrine setzt ausschliesslich die MIT-Lizenz ein (siehe
+THIRD-PARTY.md im Wurzelordner dieses Repos); der GPLv3-Zweig ist hier
+bewusst nicht abgedruckt, da er nicht genutzt wird. Copyright-Zeile und
+Lizenztext oben sind wortgleich mit dem Kommentarkopf in
+designer/vendor/jszip.min.js und mit der Original-Quelle
+https://github.com/Stuk/jszip/blob/main/LICENSE.markdown.
+
+---
+
+pako (transitive Abhaengigkeit von JSZip, mit in jszip.min.js
+hineincompiliert)
+<https://github.com/nodeca/pako>
+
+(The MIT License)
+
+Copyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Anmerkung (Vitrine): Lizenztext wortgleich von der Quelle
+https://raw.githubusercontent.com/nodeca/pako/master/LICENSE geholt (GATE55,
+2026-10-04) — nicht aus npm-Metadaten, nicht aus dem Gedaechtnis. Siehe
+eigene Zeile in THIRD-PARTY.md im Wurzelordner dieses Repos.
+
+---
+
+lie (transitive Abhaengigkeit von JSZip -- "lib/external.js" von JSZip ruft
+"require(\"lie\")" fuer die Promise-Implementierung auf, mit in
+jszip.min.js hineincompiliert)
+<https://github.com/calvinmetcalf/lie>
+
+Copyright (c) 2014-2018 Calvin Metcalf, Jordan Harband
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Anmerkung (Vitrine): Lizenztext wortgleich von der Quelle
+https://github.com/calvinmetcalf/lie/blob/master/license.md geholt (GATE96,
+2026-10-05) -- nicht aus npm-Metadaten, nicht aus dem Gedaechtnis. Siehe
+eigene Zeile in THIRD-PARTY.md im Wurzelordner dieses Repos.
+
+---
+
+immediate (transitive Abhaengigkeit von "lie" -- "lie"s package.json listet
+"immediate": "~3.0.5", mit in jszip.min.js hineincompiliert)
+<https://github.com/calvinmetcalf/immediate>
+
+Copyright (c) 2012 Barnesandnoble.com, llc, Donavon West, Domenic Denicola, Brian Cavalier
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Anmerkung (Vitrine): Lizenztext wortgleich von der Quelle
+https://github.com/calvinmetcalf/immediate/blob/master/LICENSE.txt geholt
+(GATE96, 2026-10-05) -- nicht aus npm-Metadaten, nicht aus dem Gedaechtnis.
+Siehe eigene Zeile in THIRD-PARTY.md im Wurzelordner dieses Repos.
+
+---
+
+setimmediate (transitive Abhaengigkeit von JSZip -- package.json von JSZip
+listet "setimmediate": "^1.0.5" direkt, mit in jszip.min.js
+hineincompiliert)
+<https://github.com/YuzuJS/setImmediate>
+
+Copyright (c) 2012 Barnesandnoble.com, llc, Donavon West, and Domenic Denicola
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Anmerkung (Vitrine): Lizenztext wortgleich von der Quelle
+https://github.com/YuzuJS/setImmediate/blob/master/LICENSE.txt geholt
+(GATE96, 2026-10-05) -- nicht aus npm-Metadaten, nicht aus dem Gedaechtnis.
+Siehe eigene Zeile in THIRD-PARTY.md im Wurzelordner dieses Repos.

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.ohneautor",
+  "name": "Paket ohne Autor",
+  "version": "1.0.0",
+  "category": "texturen",
+  "license": "CC0-1.0"
+}

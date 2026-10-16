@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:vitrine-manifest:v1",
+  "title": "Vitrine-Paketmanifest (vitrine.json)",
+  "description": "Schema fuer die Datei 'vitrine.json', die als Manifest in jedem .vpkg-Paket (ZIP) liegt. Dies ist die einzige Quelle der Wahrheit fuer den Aufbau eines Manifests -- Designer (JS) und Mod (Java-Parser, P1) validieren dieselbe Datei ohne Netzzugriff (Charter-Regel 8 und 10: kein $ref auf eine URL, kein Token noetig). Details zu Pflichtfeldern und Beispielen: siehe registry/schema/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "category",
+    "author",
+    "license"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses Manifest-Schemas. Aktuell fest auf 1 -- steigt nur bei einer inkompatiblen Aenderung dieses Schemas.",
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "description": "Eindeutiger, stabiler Paket-Bezeichner im Namespace-Stil (mindestens zwei durch Punkt getrennte Segmente, z. B. 'autorname.paketname'). Nur Kleinbuchstaben, Ziffern und Bindestriche je Segment, jedes Segment beginnt mit einem Buchstaben. Wird als Dateiname und Registry-Schluessel verwendet (siehe registry/README, K1) -- deshalb keine Grossbuchstaben, keine Leerzeichen, kein '..'.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+    },
+    "name": {
+      "description": "Anzeigename des Pakets im Store.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "description": "Paketversion nach Semantic Versioning 2.0.0 (https://semver.org), z. B. '1.0.0' oder '2.1.0-beta.1+build.5'.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "category": {
+      "description": "Marktplatz-Kategorie. Muss einer der in ROADMAP.md/ASSETS-NEEDED.md genannten Werte sein.",
+      "type": "string",
+      "enum": [
+        "texturen",
+        "theme",
+        "hud",
+        "shader",
+        "sound",
+        "sprache",
+        "cosmetics",
+        "bundle"
+      ]
+    },
+    "author": {
+      "description": "Name oder Handle des Autors/der Autorin, wie im Store angezeigt.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "description": {
+      "description": "Freitext-Beschreibung fuer die Detailseite im Store.",
+      "type": "string",
+      "maxLength": 2000
+    },
+    "capabilities": {
+      "description": "Fähigkeiten-Whitelist (Charter-Regel 4). Genau diese sieben Bezeichner sind erlaubt; sie decken sich mit den `category`-Werten (ohne `bundle`). Jeder andere Eintrag wird beim Installieren abgelehnt.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "texturen",
+          "theme",
+          "hud",
+          "shader",
+          "sound",
+          "sprache",
+          "cosmetics"
+        ]
+      },
+      "uniqueItems": true,
+      "maxItems": 64
+    },
+    "icon": {
+      "description": "Relativer Pfad (innerhalb des .vpkg-ZIPs) zu einem quadratischen PNG-Vorschausymbol. Kein absoluter Pfad, kein '..' -- gilt als Sicherheitsschicht schon auf Manifest-Ebene, die eigentliche Zip-Slip-Pruefung macht P3 beim Lesen des Archivs.",
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+\\.png$",
+      "maxLength": 256
+    },
+    "screenshots": {
+      "description": "Relative Pfade (innerhalb des .vpkg-ZIPs) zu Screenshots fuer die Detailseiten-Galerie (M3/S3). Gleiche Pfadregeln wie 'icon', zusaetzlich .jpg/.jpeg erlaubt.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+\\.(png|jpg|jpeg)$",
+        "maxLength": 256
+      },
+      "minItems": 1,
+      "maxItems": 10
+    },
+    "homepage": {
+      "description": "Optionale https-Projektseite (z. B. das Autoren-Repo). Kein http:// -- Charter-Regel 3 (Sicherheit vor Bequemlichkeit).",
+      "type": "string",
+      "pattern": "^https://[^\\s]+$",
+      "maxLength": 512
+    },
+    "license": {
+      "description": "Lizenz der Paketinhalte, Pflichtfeld, frei als Kurzbezeichner (z. B. 'CC0-1.0', 'CC-BY-4.0'). Muss auf registry/LICENSE-WHITELIST.md stehen -- Werte wie 'Alle Rechte vorbehalten' sind ausdruecklich verboten. Betrifft nur den Inhalt dieses Pakets, nicht Vitrine selbst.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  }
+}

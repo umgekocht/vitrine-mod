@@ -1,0 +1,12 @@
+{
+  "name": "vitrine-cli",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Vitrine-Kommandozeile (D7): init/validate/pack/sign fuer .vpkg-Paketprojekte. Keine neue Laufzeit-Abhaengigkeit -- validiert ueber denselben Auswerter wie der Designer (designer/schema-validate.js), baut ZIP-Bytes und Ed25519-Signaturen ausschliesslich mit Node-Bordmitteln (node:zlib, node:crypto). Kein pnpm, keine workspaces (Laufwerk Z: kann kein fs.watch/keine Symlinks).",
+  "bin": {
+    "vitrine": "vitrine.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

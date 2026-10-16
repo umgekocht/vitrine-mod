@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.minimalpaket",
+  "name": "Minimalpaket",
+  "version": "1.0.0",
+  "category": "texturen",
+  "author": "Vitrine-Testfixture",
+  "license": "CC0-1.0"
+}

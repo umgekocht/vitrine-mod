@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.leerer-klasse-b",
+  "name": "Leerer Klasse B",
+  "version": "1.0.0",
+  "category": "hud",
+  "contentClass": "javamod",
+  "hotApply": false,
+  "author": "Vitrine-Testfixture",
+  "license": "MIT"
+}

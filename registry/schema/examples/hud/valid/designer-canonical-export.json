@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "fps-counter",
+      "type": "text",
+      "anchor": "top-left",
+      "offset": {
+        "x": 4,
+        "y": 4
+      },
+      "scale": 1,
+      "visibility": {
+        "type": "always"
+      },
+      "content": {
+        "kind": "dynamic",
+        "source": "fps",
+        "label": "FPS: ",
+        "decimals": 0
+      }
+    },
+    {
+      "id": "biome-marker",
+      "type": "icon",
+      "anchor": "top-center",
+      "offset": {
+        "x": 0,
+        "y": 4
+      },
+      "scale": 1.5,
+      "visibility": {
+        "type": "debugScreen",
+        "debugScreen": "off"
+      },
+      "texture": "textures/gui/biome-marker.png",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "id": "speed-bar",
+      "type": "bar",
+      "anchor": "bottom-center",
+      "offset": {
+        "x": 0,
+        "y": -20
+      },
+      "visibility": {
+        "type": "dimension",
+        "dimension": "minecraft:overworld"
+      },
+      "source": "fps",
+      "min": 0,
+      "max": 144,
+      "width": 120,
+      "height": 6,
+      "color": "#3a6ff0"
+    },
+    {
+      "id": "coordinates-list",
+      "type": "list",
+      "anchor": "bottom-left",
+      "offset": {
+        "x": 4,
+        "y": -4
+      },
+      "visibility": {
+        "type": "outsideMenu"
+      },
+      "entries": [
+        {
+          "kind": "static",
+          "value": "Koordinaten"
+        },
+        {
+          "kind": "dynamic",
+          "source": "coordinates.x",
+          "label": "X: ",
+          "decimals": 1
+        },
+        {
+          "kind": "dynamic",
+          "source": "coordinates.y",
+          "label": "Y: ",
+          "decimals": 1
+        },
+        {
+          "kind": "dynamic",
+          "source": "coordinates.z",
+          "label": "Z: ",
+          "decimals": 1
+        }
+      ]
+    }
+  ]
+}

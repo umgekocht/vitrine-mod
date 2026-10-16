@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:registry-search:v1",
+  "title": "Vitrine-Registry-Suchindex (search.json)",
+  "description": "Schema fuer 'search.json' im Katalog-Repo 'vitrine-registry' (M4/K1). Eine flache, nicht paginierte Liste aller Pakete mit Suchfeldern, erzeugt von registry/build-index.js. Bewusst nicht paginiert: der Client laedt die Datei einmal und filtert lokal (siehe K2, Groessenlimit gilt trotzdem).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "totalCount",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses Suchindex-Schemas. Aktuell fest auf 1.",
+      "type": "integer",
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "totalCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "author",
+          "category",
+          "license",
+          "keywords"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "author": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "texturen",
+              "theme",
+              "hud",
+              "shader",
+              "sound",
+              "sprache",
+              "cosmetics",
+              "bundle",
+              "addon"
+            ]
+          },
+          "license": {
+            "description": "Lizenz der Paketinhalte (GATE101), abgeflacht aus 'license' im Paketeintrag -- erlaubt der Kachelansicht im Mod, die Lizenz anzuzeigen, ohne vorher die Detailseite zu laden.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "maxLength": 32
+            },
+            "uniqueItems": true,
+            "maxItems": 16
+          },
+          "keywords": {
+            "description": "Kleingeschriebene Suchbegriffe, abgeleitet aus id/name/author/tags (vom Builder erzeugt, dedupliziert).",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 64
+          }
+        }
+      }
+    }
+  }
+}

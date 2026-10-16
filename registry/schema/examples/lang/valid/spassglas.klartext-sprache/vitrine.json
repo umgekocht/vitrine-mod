@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.klartext-sprache",
+  "name": "Klartext",
+  "version": "1.0.0",
+  "category": "sprache",
+  "author": "Spassglas Studio",
+  "description": "Beispiel-Sprachpaket: benennt ein paar Vanilla-Menue-Eintraege im Locale en_us klarer. Zeigt den Aufbau eines .vpkg der Kategorie 'sprache' -- assets/minecraft/lang/<locale>.json ueberschreibt einzelne Uebersetzungs-Keys der bestehenden Locale.",
+  "capabilities": [
+    "sprache"
+  ],
+  "license": "CC0-1.0"
+}

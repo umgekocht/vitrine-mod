@@ -1,0 +1,11 @@
+{
+  "ui.button.click": {
+    "replace": true,
+    "sounds": [
+      {
+        "name": "spassglas/ui/knackholz_click",
+        "volume": 0.8
+      }
+    ]
+  }
+}

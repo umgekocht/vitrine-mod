@@ -1,0 +1,9 @@
+{
+  "menu.singleplayer": "Solo World",
+  "menu.multiplayer": "Join a Server",
+  "menu.options": "Settings",
+  "menu.quit": "Close Game",
+  "menu.returnToGame": "Resume",
+  "menu.game": "Pause Menu",
+  "gui.back": "Go Back"
+}

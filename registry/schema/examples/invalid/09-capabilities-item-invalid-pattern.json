@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.capsungueltigesmuster",
+  "name": "Capability-Eintrag ungueltig",
+  "version": "1.0.0",
+  "category": "hud",
+  "author": "Vitrine-Testfixture",
+  "capabilities": [
+    "HUD Read!"
+  ]
+}

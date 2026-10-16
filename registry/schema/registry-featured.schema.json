@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:registry-featured:v1",
+  "title": "Vitrine-Registry-Kuration (featured.json)",
+  "description": "Schema fuer 'featured.json' im Katalog-Repo 'vitrine-registry' (M4/K1). Zwei getrennt kuratierte Listen, erzeugt von registry/build-index.js aus den optionalen 'featured'- und 'popular'-Feldern jedes packages/<id>.json-Eintrags: 'items' (Startseiten-Abschnitt 'Featured') und 'popular' (Startseiten-Abschnitt 'Beliebt', ebenfalls redaktionell kuratiert, keine gemessene Download-/Nutzungszahl -- Vitrine hat bewusst kein Backend). Beide Listen sind von den Registry-Maintainern gepflegt, nicht vom jeweiligen Paketautor selbst.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "items",
+    "popular"
+  ],
+  "$defs": {
+    "curationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "license"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "license": {
+          "description": "Lizenz der Paketinhalte (GATE101), abgeflacht aus 'license' im Paketeintrag -- erlaubt der Kachelansicht im Mod, die Lizenz anzuzeigen, ohne vorher die Detailseite zu laden.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    }
+  },
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses Kurations-Schemas. Aktuell fest auf 1.",
+      "type": "integer",
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "items": {
+      "description": "Startseiten-Abschnitt 'Featured', aus dem optionalen 'featured'-Feld je Paketeintrag. Sortiert nach 'order' aufsteigend.",
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/curationItem" }
+    },
+    "popular": {
+      "description": "Startseiten-Abschnitt 'Beliebt', aus dem optionalen 'popular'-Feld je Paketeintrag -- redaktionelle Kuration, keine echte Downloadzahl. Sortiert nach 'order' aufsteigend.",
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/curationItem" }
+    }
+  }
+}

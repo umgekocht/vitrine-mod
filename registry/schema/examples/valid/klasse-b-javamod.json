@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.leuchtkompass",
+  "name": "Leuchtkompass",
+  "version": "1.0.0",
+  "category": "hud",
+  "contentClass": "javamod",
+  "hotApply": false,
+  "javaMod": {
+    "loader": "fabric",
+    "minecraftVersions": [
+      "1.21.1",
+      "1.21.4"
+    ],
+    "modId": "leuchtkompass",
+    "dependencies": [
+      "fabric-api"
+    ],
+    "jar": {
+      "fileName": "leuchtkompass-1.0.0.jar",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "size": 20480
+    }
+  },
+  "author": "Vitrine-Testfixture",
+  "description": "Klasse-B-Beispiel (GATE6/J2): ein Java-Mod als .jar. Wird nach 'mods/' gestagt und laeuft erst nach einem Neustart -- 'hotApply' sagt das ausdruecklich, damit die Karte im Store 'Neustart noetig' beschriften kann.",
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "beispiel.testmod-fixture",
+  "name": "Testmod-Fixture",
+  "category": "hud",
+  "contentClass": "javamod",
+  "author": {
+    "name": "Vitrine-Testfixture"
+  },
+  "description": "Reine Schema-Fixture fuer GATE6/J2 (Klasse B) -- keine echte Verbindung zu einem echten Jar.",
+  "license": "MIT",
+  "repository": "https://example.com/vitrine-testfixture/testmod-fixture",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "jarUrl": "https://example.com/vitrine-testfixture/testmod-fixture/releases/download/v1.0.0/testmod-fixture.jar",
+      "fileName": "testmod-fixture.jar",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "signature": "cUUn6jiavQB8sqnWFcXQvmZWp/yQEp1h1sAuHnW0fCGQkYh8q2I6cv8covRmS3g4bJS5VWl4zeQ6c54ilFrkZQ==",
+      "size": 20480,
+      "publishedAt": "2026-09-24T00:00:00.000Z",
+      "dependencies": [
+        "fabric-api"
+      ]
+    }
+  ],
+  "latestVersion": "1.0.0",
+  "updatedAt": "2026-09-24T00:00:00.000Z"
+}

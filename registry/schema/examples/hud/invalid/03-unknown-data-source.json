@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "health-text",
+      "type": "text",
+      "anchor": "top-left",
+      "content": { "kind": "dynamic", "source": "player.health" }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "spassglas.steinbrocken-textur",
+  "name": "Steinbrocken",
+  "category": "texturen",
+  "author": {
+    "name": "Spassglas Studio",
+    "url": "https://github.com/umgekocht"
+  },
+  "description": "Platzhalter-Steintexturen im rauen Grauton -- Stein, Pflasterstein, Eisenerz. Ersetzt vanilla, bis ein handgezeichnetes Set nachkommt.",
+  "tags": [
+    "stein",
+    "gestein"
+  ],
+  "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/steinbrocken-textur/icon.png",
+  "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
+  "license": "CC-BY-4.0",
+  "repository": "https://github.com/umgekocht/vitrine-packs-starter",
+  "minecraftVersions": [
+    "1.21.1",
+    "1.21.4"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/steinbrocken-textur-v1.0.0/steinbrocken-textur.vpkg",
+      "sha256": "2faaa323dc89df2207813eb07fb76ef18c8bcbcd317015e1a933002b8038e681",
+      "signature": "e/18jD9gB03hwFXaDrVEenoVNaTVmZlaUbUSbwbkyDKuVvcUqfH3Jx6RhrzJ/1edmJ+MV/oF+FwiWib7jSGKCg==",
+      "size": 1418,
+      "publishedAt": "2026-09-19T12:30:35Z"
+    },
+    {
+      "version": "1.0.1",
+      "vpkgUrl": "https://github.com/umgekocht/vitrine-packs-starter/releases/download/steinbrocken-textur-v1.0.1/steinbrocken-textur.vpkg",
+      "sha256": "aae9f324722349fdd39e9f93be4c1a4e5026fe3415af3f9eb180e359a744d7ce",
+      "signature": "hV3Pz2xPIQHFBp50MWjyNhTJyMHNiguzZ7PwTp2UCyM8CYFkiGp6hppTuxQCtktuujHBnVk1x0y+TwvxCzOADQ==",
+      "size": 7448,
+      "publishedAt": "2026-10-05T22:39:30.913Z"
+    }
+  ],
+  "latestVersion": "1.0.1",
+  "updatedAt": "2026-10-05T22:39:30.913Z",
+  "featured": {
+    "order": 1,
+    "note": "Startpaket, zeigt Klasse-A-Texturen ohne Neustart."
+  }
+}

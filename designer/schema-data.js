@@ -1,0 +1,267 @@
+"use strict";
+
+/*
+ * AUTO-GENERIERT -- nicht von Hand bearbeiten.
+ *
+ * Erzeugt aus registry/schema/vitrine.schema.json durch
+ * registry/schema/generate-designer-schema.mjs. Bei jeder Aenderung an
+ * vitrine.schema.json dieses Skript erneut laufen lassen:
+ *   node registry/schema/generate-designer-schema.mjs
+ *
+ * Diese Datei enthaelt nur die Schema-Daten als eingebettete JS-Konstante --
+ * kein zweites Schema-Format, nur ein anderer Transportweg fuer file://
+ * (siehe Kommentar im Generator-Skript). Designer (dieses Skript) und
+ * Mod (ManifestParser, P1) validieren inhaltlich dieselbe Datei
+ * registry/schema/vitrine.schema.json.
+ */
+
+var VITRINE_MANIFEST_SCHEMA = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vitrine:schema:vitrine-manifest:v1",
+  "title": "Vitrine-Paketmanifest (vitrine.json)",
+  "description": "Schema fuer die Datei 'vitrine.json', die als Manifest in jedem .vpkg-Paket (ZIP) liegt. Dies ist die einzige Quelle der Wahrheit fuer den Aufbau eines Manifests -- Designer (JS) und Mod (Java-Parser, P1) validieren dieselbe Datei ohne Netzzugriff (Charter-Regel 8 und 10: kein $ref auf eine URL, kein Token noetig). Details zu Pflichtfeldern und Beispielen: siehe registry/schema/README.md. GATE6/J2: 'contentClass' unterscheidet hier dieselben zwei Inhaltsklassen wie im Katalog-Eintrag (registry-package.schema.json) -- Klasse A 'resource' (Default, wenn das Feld fehlt) und Klasse B 'javamod' (.jar, Neustart noetig). Ein und dieselbe Vokabel auf beiden Seiten, kein zweites Wort fuer dieselbe Sache.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "category",
+    "author",
+    "license"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version dieses Manifest-Schemas. Aktuell fest auf 1 -- steigt nur bei einer inkompatiblen Aenderung dieses Schemas.",
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "description": "Eindeutiger, stabiler Paket-Bezeichner im Namespace-Stil (mindestens zwei durch Punkt getrennte Segmente, z. B. 'autorname.paketname'). Nur Kleinbuchstaben, Ziffern und Bindestriche je Segment, jedes Segment beginnt mit einem Buchstaben. Wird als Dateiname und Registry-Schluessel verwendet (siehe registry/README, K1) -- deshalb keine Grossbuchstaben, keine Leerzeichen, kein '..'.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+    },
+    "name": {
+      "description": "Anzeigename des Pakets im Store.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "description": "Paketversion nach Semantic Versioning 2.0.0 (https://semver.org), z. B. '1.0.0' oder '2.1.0-beta.1+build.5'.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "category": {
+      "description": "Marktplatz-Kategorie. Muss einer der in ROADMAP.md/ASSETS-NEEDED.md genannten Werte sein.",
+      "type": "string",
+      "enum": [
+        "texturen",
+        "theme",
+        "hud",
+        "shader",
+        "sound",
+        "sprache",
+        "cosmetics",
+        "bundle",
+        "addon"
+      ]
+    },
+    "contentClass": {
+      "description": "Inhaltsklasse dieses Pakets (GATE6/J2, PLAN.md Abschnitt 1). Fehlt das Feld, gilt Klasse A ('resource') -- damit bleibt jede bestehende vitrine.json unveraendert gueltig. 'javamod' ist Klasse B: das Paket liefert eine Java-Mod-.jar, die nach 'mods/' gestagt wird und erst nach einem Neustart laeuft (die JVM laedt Klassen nur einmal, Mixins werden beim Start eingespielt -- es gibt keinen hot-Pfad, nicht bloss keine Erlaubnis). Gleiche Vokabel und gleiche Werte wie 'contentClass' in registry-package.schema.json; 'category' bleibt davon unberuehrt und rein inhaltlich.",
+      "type": "string",
+      "enum": [
+        "resource",
+        "javamod"
+      ]
+    },
+    "hotApply": {
+      "description": "Sagt ehrlich, ob dieses Paket ohne Neustart wirksam wird. Klasse A (contentClass 'resource' oder fehlend): true -- das Feld darf weggelassen werden, fehlend bedeutet true. Klasse B (contentClass 'javamod'): muss ausdruecklich false sein. Aus diesem Feld speist sich das Band 'Neustart noetig' auf der Store-Karte -- es steht deshalb im Manifest und wird nicht aus der Kategorie geraten (Charter-Regel 2: nichts vortaeuschen).",
+      "type": "boolean"
+    },
+    "javaMod": {
+      "description": "Klasse B (PLAN.md Abschnitt 1, ROADMAP M7/J2): alles, was der Mod fuer ein JavaModOffer braucht -- Loader, freigegebene Minecraft-Versionen, die .jar mit ihrer SHA-256 und die harten Abhaengigkeiten. Nur bei contentClass 'javamod' erlaubt und dort Pflicht; ein Klasse-A-Paket darf dieses Objekt gar nicht tragen (siehe 'allOf' am Ende dieses Schemas) -- so kann sich nie eine .jar in ein als hot beworbenes Paket schmuggeln. Eine Ed25519-Signatur steht hier bewusst NICHT: signiert wird von der Registry (registry-package.schema.json, versions[].signature). Ein Paketautor kann gar nicht mit dem Registry-Schluessel signieren -- ein Signaturfeld an dieser Stelle waere ein Vertrauensanker, den niemand haelt.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loader",
+        "minecraftVersions",
+        "jar"
+      ],
+      "properties": {
+        "loader": {
+          "description": "Mod-Loader, fuer den die .jar gebaut ist. Vitrine selbst laeuft auf Fabric; 'quilt' ist als Fabric-kompatible Laufzeit zugelassen.",
+          "type": "string",
+          "enum": [
+            "fabric",
+            "quilt"
+          ]
+        },
+        "minecraftVersions": {
+          "description": "Minecraft-Versionen, fuer die diese .jar freigegeben ist, z. B. ['1.21.1', '1.21.4']. Mindestens eine. Der Store bietet ein Klasse-B-Paket nicht an, wenn die laufende Version nicht in dieser Liste steht -- besser gar nicht anbieten als nach dem Neustart ein kaputtes Spiel.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*\\.[0-9]+(\\.[0-9]+)?$",
+            "maxLength": 16
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "modId": {
+          "description": "Optionale Fabric-Mod-Id aus der fabric.mod.json der .jar. Dient der J3-Konfliktpruefung (FabricInstalledModConflictCheck): ist dieselbe Mod-Id schon geladen, wird nicht ein zweites Mal gestagt.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-_]{1,63}$"
+        },
+        "dependencies": {
+          "description": "Optionale harte Fabric-Mod-Ids, die vor dem Kopieren bereits installiert, vorgemerkt oder das Angebot selbst sein muessen (ROADMAP J3, JavaModOffer#dependencies). Fehlt das Feld, gilt 'keine harten Abhaengigkeiten'. Bewusst ohne Versions-Range -- dieses Angebot traegt je Abhaengigkeit selbst keine Versionsangabe. Gleiches Muster wie registry-package.schema.json, $defs/javamodVersionItem.dependencies.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-_]{1,63}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "jar": {
+          "description": "Die eine .jar dieses Klasse-B-Pakets. Sie liegt NICHT im .vpkg -- ein Klasse-B-Paket wird als blankes .jar-Release-Asset veroeffentlicht (registry-package.schema.json, $defs/javamodVersionItem mit 'jarUrl'). Diese Angaben hier sind die vom Autor verantworteten Sollwerte: aus ihnen baut 'cli publish' den Katalog-Eintrag, und gegen genau diese Pruefsumme haelt JavaModStager die bezogene Datei, bevor sie ihren Platz in 'mods/' bekommt.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fileName",
+            "sha256",
+            "size"
+          ],
+          "properties": {
+            "fileName": {
+              "description": "Dateiname, unter dem die .jar in 'mods/' landet. Kein Pfadtrenner ('/' oder '\\\\'), kein Doppelpunkt, kein '..', beginnt nicht mit '.', endet auf '.jar'. Dasselbe Muster steht in registry-package.schema.json ($defs/javamodVersionItem.fileName) und wird auf der Java-Seite von JavaModOffer#requireSafeJarFileName noch einmal nachgehaertet -- doppelt, absichtlich.",
+              "type": "string",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)[^\\\\/:]+\\.jar$",
+              "minLength": 5,
+              "maxLength": 255
+            },
+            "sha256": {
+              "description": "SHA-256 der .jar, hex, klein geschrieben. Pflicht ohne Ausnahme -- ein Klasse-B-Angebot ohne bekannte Pruefsumme wird nie gestagt (Charter-Regel 3 'Sicherheit vor Bequemlichkeit'; JavaModOffer lehnt ein leeres expectedSha256Hex schon im Konstruktor ab). Ein Klasse-B-Manifest ohne dieses Feld ist ungueltig und faellt hier auf, nicht erst beim Nutzer.",
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "description": "Groesse der .jar in Bytes -- fuer die ehrliche Anzeige auf der Karte und als Deckel beim Herunterladen.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 536870912
+            }
+          }
+        }
+      }
+    },
+    "author": {
+      "description": "Name oder Handle des Autors/der Autorin, wie im Store angezeigt.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "description": {
+      "description": "Freitext-Beschreibung fuer die Detailseite im Store.",
+      "type": "string",
+      "maxLength": 2000
+    },
+    "capabilities": {
+      "description": "Fähigkeiten-Whitelist (Charter-Regel 4). Genau diese neun Bezeichner sind erlaubt; die ersten sieben decken sich mit den `category`-Werten (ohne `bundle`), `verhalten` und `skript` gehoeren zu Addons (`category: addon`, ROADMAP M10/AD1+AD2: `verhalten` fuer Datenpaket-Inhalte unter `data/` und deklarative Regeln unter `regeln/*.json`, AD4; `skript` ist die volle X5-Sandbox-Skript-Faehigkeit fuer `scripts/*.vs`-Dateien, ROADMAP AD2 -- der Mod laedt sie ueber `ScriptAddonLoader`, nur bei angemeldeter und zugestimmter Faehigkeit). Jeder andere Eintrag wird beim Installieren abgelehnt.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "texturen",
+          "theme",
+          "hud",
+          "shader",
+          "sound",
+          "sprache",
+          "cosmetics",
+          "verhalten",
+          "skript"
+        ]
+      },
+      "uniqueItems": true,
+      "maxItems": 64
+    },
+    "icon": {
+      "description": "Relativer Pfad (innerhalb des .vpkg-ZIPs) zu einem quadratischen PNG-Vorschausymbol. Kein absoluter Pfad, kein '..' -- gilt als Sicherheitsschicht schon auf Manifest-Ebene, die eigentliche Zip-Slip-Pruefung macht P3 beim Lesen des Archivs.",
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+\\.png$",
+      "maxLength": 256
+    },
+    "screenshots": {
+      "description": "Relative Pfade (innerhalb des .vpkg-ZIPs) zu Screenshots fuer die Detailseiten-Galerie (M3/S3). Gleiche Pfadregeln wie 'icon', zusaetzlich .jpg/.jpeg erlaubt.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+\\.(png|jpg|jpeg)$",
+        "maxLength": 256
+      },
+      "minItems": 1,
+      "maxItems": 10
+    },
+    "homepage": {
+      "description": "Optionale https-Projektseite (z. B. das Autoren-Repo). Kein http:// -- Charter-Regel 3 (Sicherheit vor Bequemlichkeit).",
+      "type": "string",
+      "pattern": "^https://[^\\s]+$",
+      "maxLength": 512
+    },
+    "license": {
+      "description": "Lizenz der Paketinhalte, Pflichtfeld, frei als Kurzbezeichner (z. B. 'CC0-1.0', 'CC-BY-4.0'). Muss auf registry/LICENSE-WHITELIST.md stehen -- Werte wie 'Alle Rechte vorbehalten' sind ausdruecklich verboten. Betrifft nur den Inhalt dieses Pakets, nicht Vitrine selbst.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  },
+  "allOf": [
+    {
+      "title": "Klasse A gegen Klasse B (PLAN.md Abschnitt 1)",
+      "description": "Die einzige Regel dieses Schemas, die mehrere Felder miteinander verknuepft. contentClass 'javamod' ist Klasse B: 'hotApply' muss ausdruecklich false sein und das 'javaMod'-Objekt muss da sein -- sonst koennte der Store nicht ehrlich 'Neustart noetig' beschriften und JavaModStager haette keine Pruefsumme. Jede andere contentClass (also 'resource' oder gar keine Angabe) ist Klasse A: 'hotApply' ist dort true (oder weggelassen) und ein 'javaMod'-Objekt ist verboten -- ein Klasse-A-Paket darf keine .jar mitbringen.",
+      "if": {
+        "required": [
+          "contentClass"
+        ],
+        "properties": {
+          "contentClass": {
+            "const": "javamod"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hotApply",
+          "javaMod"
+        ],
+        "properties": {
+          "hotApply": {
+            "const": false
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "hotApply": {
+            "const": true
+          }
+        },
+        "not": {
+          "description": "Feld 'javaMod' ist nur bei contentClass 'javamod' erlaubt -- ein Klasse-A-Paket darf keine .jar mitbringen (PLAN.md Abschnitt 1)",
+          "required": [
+            "javaMod"
+          ]
+        }
+      }
+    }
+  ]
+};
+
+if (typeof module === "object" && module.exports) {
+  module.exports = VITRINE_MANIFEST_SCHEMA;
+}

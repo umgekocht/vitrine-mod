@@ -1,0 +1,18 @@
+{
+  "name": "vitrine-registry",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Schema-Validierung und (spaeter) Index-Builder fuer den Vitrine-Katalog. Kein Buildschritt fuer den Designer noetig -- dieses package.json betrifft nur registry/-eigene Node-Skripte (Validator, Index-Builder aus K1).",
+  "type": "module",
+  "scripts": {
+    "validate-examples": "node schema/validate-examples.mjs",
+    "build-index": "node build-index.js",
+    "test": "node --test test/*.test.mjs",
+    "validate-changed-packages": "node scripts/validate-changed-packages.mjs",
+    "dry-run": "node scripts/dry-run.mjs",
+    "check-live-catalog": "node scripts/check-live-catalog.mjs"
+  },
+  "devDependencies": {
+    "@cfworker/json-schema": "4.1.1"
+  }
+}
