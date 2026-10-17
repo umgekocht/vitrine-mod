@@ -169,3 +169,4 @@ input:not([type=checkbox]):not([type=file]) {
 .legal a { color: var(--accent); }
 
 .stack { display: grid; gap: 20px; }
+.section-title { margin: 8px 0 0; font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }

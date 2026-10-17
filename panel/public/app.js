@@ -171,12 +171,48 @@ function setupUpload() {
 
 // ---- moderation -------------------------------------------------------------
 
+/** Suggestion row for moderators: only comment and delete. */
+function modSuggestionItem(s) {
+	return el("div", { class: "item" },
+		el("div", {},
+			el("div", { class: "title" }, s.title),
+			el("div", { class: "meta" }, badge(s.status), ` ${KIND_NAMES[s.kind] || s.kind} · by ${s.author || "player"} · ${s.votes} votes · ${fmtDate(s.created_at)}`),
+		),
+		el("div", { class: "actions" },
+			el("button", {
+				class: "btn", onclick: async () => {
+					const note = prompt("Comment for players (shown under the suggestion):", s.mod_note || "");
+					if (note === null) return;
+					await api(`/api/mod/suggestions/${s.id}`, { method: "POST", body: { status: s.status, note } }).catch((e) => alert(e.message));
+					loadQueue();
+				},
+			}, "Comment"),
+			el("button", {
+				class: "btn danger", onclick: async () => {
+					if (!confirm(`Delete the suggestion "${s.title}"?`)) return;
+					await api(`/api/mod/suggestions/${s.id}`, { method: "POST", body: { hidden: true } }).catch((e) => alert(e.message));
+					loadQueue();
+				},
+			}, "Delete"),
+		),
+		el("div", { class: "desc" }, s.body),
+		s.mod_note ? el("div", { class: "note" }, `Team: ${s.mod_note}`) : null,
+	);
+}
+
 async function loadQueue() {
 	const list = $("#queue-list");
 	list.replaceChildren(el("div", { class: "empty" }, "Loading…"));
 	try {
 		const { submissions } = await api(`/api/mod/queue?status=${state.queueStatus}`);
-		list.replaceChildren(...(submissions.length ? submissions.map(queueItem) : [el("div", { class: "empty" }, "Nothing here.")]));
+		const parts = [el("h3", { class: "section-title" }, "Packages"),
+			...(submissions.length ? submissions.map(queueItem) : [el("div", { class: "empty" }, "Nothing here.")])];
+		if (state.queueStatus === "approved") {
+			const { suggestions } = await api("/api/suggestions?sort=new");
+			parts.push(el("h3", { class: "section-title" }, "Suggestions"),
+				...(suggestions.length ? suggestions.map(modSuggestionItem) : [el("div", { class: "empty" }, "No suggestions.")]));
+		}
+		list.replaceChildren(...parts);
 	} catch (e) {
 		list.replaceChildren(el("div", { class: "empty" }, e.message));
 	}
