@@ -480,6 +480,7 @@ function gatePage(env) {
 <h1>Quick check</h1><p>Please confirm you are a human. This keeps bots away from uploads and suggestions.</p>
 <div class="cf-turnstile" data-sitekey="${escapeAttr(env.TURNSTILE_SITE_KEY)}" data-callback="vitrinePassed" data-action="gate"></div>
 <p id="gate-msg" class="fine" role="status"></p>
+<p class="fine"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
 </div></main></body></html>`;
 	return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }

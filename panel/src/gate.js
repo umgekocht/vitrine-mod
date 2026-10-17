@@ -61,5 +61,6 @@ export async function verifyTurnstile(env, token, ip) {
 
 /** Paths that must work without a pass (the gate itself and what it needs). */
 export function isGateExempt(path) {
-	return path === "/gate" || path === "/gate/verify" || path === "/gate.js" || path === "/app.css" || path === "/icon.png";
+	return path === "/gate" || path === "/gate/verify" || path === "/gate.js" || path === "/app.css" || path === "/icon.png"
+		|| path === "/privacy" || path === "/privacy.html" || path === "/terms" || path === "/terms.html";
 }
