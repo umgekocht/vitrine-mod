@@ -288,6 +288,27 @@
       "maxItems": 32,
       "uniqueItems": true
     },
+    "capabilities": {
+      "description": "GATE90-FOLLOW: die Faehigkeits-Bezeichner ('APIs'), die dieses Paket im vitrine.json-Manifest anmelden wird -- dieselbe feste Whitelist wie 'mod/src/main/java/de/spassglas/vitrine/vpkg/VpkgCapability.java' und dasselbe Zeichenmuster/dieselben Beispiele wie 'capabilities' in vitrine.schema.json. Macht die Faehigkeiten eines Katalog-Angebots schon beim Abruf von 'packages/<id>.json' bekannt, VOR jedem Download (docs/UI-SPEC.md Abschnitt 8: 'Erscheint vor der ersten Installation eines Pakets') -- siehe CatalogPackInstaller#install(String, DownloadRequest, String, List, CancellationToken, DownloadProgress) (GATE90), der genau diese Vorab-Liste erwartet. Fehlt das Feld (aeltere Eintraege), gilt 'keine angemeldeten Faehigkeiten vorab bekannt' -- die endgueltige, bindende Pruefung bleibt in jedem Fall die echte vitrine.json nach dem Download (Charter-Regel 4). Muss mit den tatsaechlich im veroeffentlichten Paket angemeldeten Faehigkeiten uebereinstimmen; eine Abweichung ist ein Registry-Pflegefehler, keine Sicherheitsluecke, weil der Mod nach dem Download ohnehin erneut gegen die echte vitrine.json prueft.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "texturen",
+          "theme",
+          "hud",
+          "shader",
+          "sound",
+          "sprache",
+          "cosmetics",
+          "verhalten",
+          "skript"
+        ]
+      },
+      "uniqueItems": true,
+      "maxItems": 9,
+      "default": []
+    },
     "versions": {
       "description": "Alle veroeffentlichten Versionen dieses Pakets, aelteste zuerst empfohlen. Mindestens eine. Die Form jedes Eintrags haengt von 'contentClass' ab -- siehe das if/then/else auf Dokumentebene und $defs/resourceVersionItem bzw. $defs/javamodVersionItem oben.",
       "type": "array",

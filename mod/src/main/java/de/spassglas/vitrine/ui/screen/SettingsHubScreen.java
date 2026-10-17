@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Einstellungen im Microsoft-Store-Stil (umgekocht, 2026-10-07: "soviel wie moeglich
@@ -71,13 +72,24 @@ public final class SettingsHubScreen extends Screen {
 	};
 
 	/**
+	 * Loest den Konfigordner fuer den HUD-Editor auf, standardmaessig ueber
+	 * {@code FabricLoader} (wie {@link VitrineConfig#dir()}). GATE75-Testseam:
+	 * {@link #setHudEditorConfigDirSupplierForTest} ersetzt dies, damit ein
+	 * Test ohne echten, laufenden {@code FabricLoader} denselben
+	 * Erzeugungsweg wie {@code HudEditorScreen.create(Screen)} ausloesen
+	 * kann (derselbe Kniff wie {@link #screenOpener}).
+	 */
+	private Supplier<Path> hudEditorConfigDirSupplier = VitrineConfig::dir;
+
+	/**
 	 * GATE75: derselbe HUD-Editor-Screen wie {@code /vitrine hud edit}
 	 * ({@code HudCommand#runEdit}) -- beide rufen {@code
-	 * HudEditorScreen.create(parent)} auf, hier mit diesem Settings-Screen
-	 * als Eltern-Screen statt mit {@code client.currentScreen}.
+	 * HudEditorScreen.create(parent, configDir)} auf, hier mit diesem
+	 * Settings-Screen als Eltern-Screen statt mit {@code
+	 * client.currentScreen}.
 	 */
-	private final Runnable openHudEditorAction =
-			() -> screenOpener.accept(de.spassglas.vitrine.hud.client.HudEditorScreen.create(this));
+	private final Runnable openHudEditorAction = () -> screenOpener.accept(
+			de.spassglas.vitrine.hud.client.HudEditorScreen.create(this, hudEditorConfigDirSupplier.get()));
 
 	public SettingsHubScreen(Screen parent) {
 		super(Text.translatable("vitrine.settings.title"));
@@ -282,6 +294,11 @@ public final class SettingsHubScreen extends Screen {
 	/** GATE75-Testseam: ersetzt, wie {@link #openHudEditorAction} einen Screen oeffnet. */
 	void setScreenOpenerForTest(Consumer<Screen> opener) {
 		this.screenOpener = opener;
+	}
+
+	/** GATE75-Testseam: ersetzt, woher {@link #openHudEditorAction} den HUD-Konfigordner nimmt. */
+	void setHudEditorConfigDirSupplierForTest(Supplier<Path> configDirSupplier) {
+		this.hudEditorConfigDirSupplier = configDirSupplier;
 	}
 
 	/** GATE75-Testseam: die Aktion, die der "HUD-Editor"-Knopf in den Einstellungen ausloest. */

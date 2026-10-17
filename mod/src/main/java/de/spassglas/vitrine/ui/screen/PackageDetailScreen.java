@@ -727,6 +727,23 @@ public final class PackageDetailScreen extends Screen {
 	}
 
 	/**
+	 * ROADMAP GATE90: die Faehigkeiten-Bezeichner, die {@link #model} bereits
+	 * <em>vor</em> einem Katalog-Download kennt (sortiert, wie {@link
+	 * de.spassglas.vitrine.ui.dialog.CapabilityConsentModel#capabilityIds()}).
+	 * Heute liefert {@code CatalogPackageDetailSource} nie echte Daten dafuer
+	 * ({@link PackageDetailModel#capabilitiesKnown()} ist fuer jedes
+	 * Katalog-Angebot {@code false} -- Registry-Schema-Luecke, siehe
+	 * {@code CatalogPackageDetailSource}); die leere Liste, die das hier
+	 * zurueckgibt, ist deshalb Verlegenheit, nicht Wissen. Trotzdem schon
+	 * jetzt an {@code CatalogPackInstaller} weitergegeben, damit eine
+	 * spaetere Registry-Erweiterung ohne weitere Mod-Aenderung sofort vor dem
+	 * Download gilt statt erst danach.
+	 */
+	private List<String> knownCapabilityIds() {
+		return model.capabilities().stream().map(VpkgCapability::id).sorted().toList();
+	}
+
+	/**
 	 * ROADMAP GATE79: der eigentliche Installationsschritt hinter {@link
 	 * #runInstall} -- ein eigenes Funktionsinterface statt eines direkten
 	 * {@code PackInstallService.instance()}-Aufrufs, austauschbar fuer Tests.
@@ -962,15 +979,26 @@ public final class PackageDetailScreen extends Screen {
 	 * dem Hintergrund-Thread aus {@link #beginCatalogInstall()}/
 	 * {@link #confirmCatalogInstall} -- alles, was den Bildschirm oder
 	 * Minecrafts Screen-Zustand anfasst, geht ueber {@link #onClientThread}.
+	 *
+	 * <p>GATE90: {@link #knownCapabilityIds()} gibt {@code
+	 * CatalogPackInstaller#install(String, DownloadRequest, String, List,
+	 * CancellationToken, DownloadProgress)} alles mit, was die Detailseite
+	 * bereits <em>vor</em> diesem Aufruf ueber die Faehigkeiten des Pakets
+	 * weiss -- fehlt dafuer die Zustimmung, wirft dieser Aufruf {@link
+	 * CatalogConsentRequiredException}, bevor ueberhaupt ein Byte
+	 * heruntergeladen wurde (heute bei Katalog-Angeboten immer eine leere
+	 * Liste, siehe {@link #knownCapabilityIds()}).</p>
 	 */
 	private void performCatalogInstall(DownloadRequest request, String sourceHost) {
 		CancellationToken token = new CancellationToken();
 		String flyoutId = profileId();
+		List<String> knownCapabilityIds = knownCapabilityIds();
 		DownloadFlyoutService.instance().startDownload(flyoutId, model.header().name(), request.declaredSize(), token);
 		DownloadProgress progress = (bytesRead, totalBytes) ->
 				DownloadFlyoutService.instance().updateProgress(flyoutId, bytesRead, totalBytes);
 		try {
-			CatalogPackInstallService.instance().install(model.manifestId(), request, sourceHost, token, progress);
+			CatalogPackInstallService.instance().install(model.manifestId(), request, sourceHost,
+					knownCapabilityIds, token, progress);
 			DownloadFlyoutService.instance().markDone(flyoutId);
 			Vitrine.LOGGER.info("Katalog-Paket '{}' aus der Detailseite installiert (Quelle '{}').",
 					model.manifestId(), sourceHost);
@@ -979,8 +1007,11 @@ public final class PackageDetailScreen extends Screen {
 				returnToParent();
 			});
 		} catch (CatalogConsentRequiredException e) {
-			// Erfolgreich heruntergeladen und verifiziert, wartet aber noch auf die
-			// Faehigkeiten-Zustimmung -- kein Fehler, kein "erledigt".
+			// GATE90: dieselbe Ausnahme deckt jetzt zwei Faelle ab -- entweder war
+			// die Faehigkeit schon vor diesem Aufruf bekannt (kein Download
+			// passiert) oder sie wurde erst beim echten Download sichtbar (wie vor
+			// GATE90, erfolgreich heruntergeladen und verifiziert). Beides ist kein
+			// Fehler, kein "erledigt" -- in beiden Faellen bleibt packs/ unberuehrt.
 			DownloadFlyoutService.instance().discardRunning(flyoutId);
 			onClientThread(() -> {
 				phase = PackageInstallPhase.IDLE;

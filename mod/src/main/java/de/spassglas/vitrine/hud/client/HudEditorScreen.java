@@ -18,6 +18,8 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
+import java.nio.file.Path;
+
 /**
  * In-Game-HUD-Editor (ROADMAP T6): ein Widget auswaehlen, mit der Maus ziehen
  * oder mit den Pfeiltasten fein verschieben, Anker/Ausrichtung umschalten,
@@ -50,9 +52,19 @@ public final class HudEditorScreen extends Screen {
 
 	/** Baut den Editor ueber den gerade aktiven HUD-Widgets und dem echten Konfigordner. */
 	public static HudEditorScreen create(Screen parent) {
-		return new HudEditorScreen(parent, HudEditorModel.forConfigDir(
-				ActiveHudRegistry.instance().activeWidgetRefs(),
-				FabricLoader.getInstance().getConfigDir().resolve(Vitrine.MOD_ID)));
+		return create(parent, FabricLoader.getInstance().getConfigDir().resolve(Vitrine.MOD_ID));
+	}
+
+	/**
+	 * Wie {@link #create(Screen)}, aber mit einem frei waehlbaren
+	 * Konfigordner -- erlaubt {@code SettingsHubScreen}, denselben
+	 * Erzeugungsweg testbar zu verdrahten (Testseam
+	 * {@code SettingsHubScreen#setHudEditorConfigDirSupplierForTest}), ohne
+	 * dass dafuer ein echter, laufender {@code FabricLoader} noetig ist.
+	 */
+	public static HudEditorScreen create(Screen parent, Path configDir) {
+		return new HudEditorScreen(parent,
+				HudEditorModel.forConfigDir(ActiveHudRegistry.instance().activeWidgetRefs(), configDir));
 	}
 
 	@Override

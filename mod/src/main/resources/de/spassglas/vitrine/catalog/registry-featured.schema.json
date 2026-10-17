@@ -40,6 +40,27 @@
         "note": {
           "type": "string",
           "maxLength": 200
+        },
+        "capabilities": {
+          "description": "GATE90-FOLLOW: abgeflacht aus 'capabilities' im Paketeintrag (registry-package.schema.json), optional -- fehlt es dort oder ist es leer, fehlt es auch hier.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "texturen",
+              "theme",
+              "hud",
+              "shader",
+              "sound",
+              "sprache",
+              "cosmetics",
+              "verhalten",
+              "skript"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true
         }
       }
     }

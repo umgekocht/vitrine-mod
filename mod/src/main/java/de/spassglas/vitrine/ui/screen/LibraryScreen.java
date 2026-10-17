@@ -367,6 +367,28 @@ public final class LibraryScreen extends Screen {
 		return updateStatusByPackId.values().stream().filter(UpdateStatus::updateAvailable).count();
 	}
 
+	/**
+	 * ROADMAP GATE89 (docs/UI-SPEC.md "6. Bibliothek"): der Zustandstext einer
+	 * Zeile ("Aktiv"/"Aus", {@link #renderListRowColumns}) nennt den Zustand,
+	 * nicht die Aktion -- getrennt vom Schalter-Knopf ({@link
+	 * #toggleActionLabelKey}), der die naechste Aktion nennt. Vorher stand an
+	 * dieser Stelle derselbe Wortlaut wie der Knopf ("Aktivieren"), was wie
+	 * ein zweiter Knopf wirkte statt wie eine Zustandsanzeige.
+	 */
+	static String stateLabelKey(boolean active) {
+		return active ? "vitrine.library.state.on" : "vitrine.library.state.off";
+	}
+
+	/**
+	 * ROADMAP GATE89: die Beschriftung des Schalter-Knopfs -- nennt die
+	 * naechste Aktion ("Aktivieren"/"Deaktivieren"), bewusst anders formuliert
+	 * als {@link #stateLabelKey} (der Zustand "Aktiv"/"Aus"), damit beide
+	 * nicht verwechselbar sind.
+	 */
+	static String toggleActionLabelKey(boolean active) {
+		return active ? "vitrine.action.deactivate" : "vitrine.action.activate";
+	}
+
 	private int buildListRow(LibraryEntry entry, int x, int cursorY, int rowWidth) {
 		boolean active = entry.active();
 		// ROADMAP GATE119: waehrend die E/A dieses Schalters auf dem
@@ -377,7 +399,7 @@ public final class LibraryScreen extends Screen {
 		boolean toggling = togglingPackIds.contains(entry.packId());
 		Text toggleLabel = toggling
 				? Text.translatable("vitrine.detail.action.working")
-				: Text.translatable(active ? "vitrine.action.deactivate" : "vitrine.action.activate");
+				: Text.translatable(toggleActionLabelKey(active));
 		int toggleX = x + rowWidth - VitrineTheme.LIBRARY_TOGGLE_WIDTH;
 		int buttonY = cursorY + (VitrineTheme.LIBRARY_ROW_HEIGHT - VitrineTheme.DETAIL_ACTION_BUTTON_HEIGHT) / 2;
 		ButtonWidget toggle = ButtonWidget.builder(toggleLabel, b -> onToggleActive(entry, !active))
@@ -1174,7 +1196,7 @@ public final class LibraryScreen extends Screen {
 		String restart = de.spassglas.vitrine.platform.PlatformHost.restartReason(entry.packId());
 		ScaledText.draw(context, this.textRenderer,
 				restart != null ? Text.translatable("vitrine.platform.restart_label")
-						: Text.translatable(entry.active() ? "vitrine.library.state.on" : "vitrine.library.state.off"),
+						: Text.translatable(stateLabelKey(entry.active())),
 				typeX, mid + VitrineTheme.TYPE_BODY / 2 + 2,
 				restart != null ? 0xFFFFC857
 						: entry.active() ? ActiveThemeColors.accent() : ActiveThemeColors.disabledText(),

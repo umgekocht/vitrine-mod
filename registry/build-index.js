@@ -229,6 +229,9 @@ function buildIndexPages(packages, { pageSize, now }) {
 					// GATE70-FOLLOW: optionales Feld, nur setzen, wenn das Paket es
 					// traegt -- siehe registry-package.schema.json, 'minecraftVersions'.
 					if (pkg.minecraftVersions) summary.minecraftVersions = pkg.minecraftVersions;
+					// GATE90-FOLLOW: dasselbe 'nur setzen, wenn vorhanden'-Muster fuer
+					// 'capabilities' -- siehe registry-package.schema.json.
+					if (pkg.capabilities && pkg.capabilities.length > 0) summary.capabilities = pkg.capabilities;
 					return summary;
 				}),
 			},
@@ -254,6 +257,8 @@ function buildSearch(packages, { now }) {
 				keywords: keywordsFor(pkg),
 			};
 			if (pkg.tags) entry.tags = pkg.tags;
+			// GATE90-FOLLOW: siehe buildIndexPages oben, derselbe Grund.
+			if (pkg.capabilities && pkg.capabilities.length > 0) entry.capabilities = pkg.capabilities;
 			return entry;
 		}),
 	};
@@ -273,6 +278,8 @@ function buildCurationList(packages, fieldName) {
 			// GATE101: 'license' auch hier mitgeben, siehe buildIndexPages oben.
 			const item = { id: pkg.id, order: pkg[fieldName].order, license: pkg.license };
 			if (pkg[fieldName].note) item.note = pkg[fieldName].note;
+			// GATE90-FOLLOW: dasselbe 'nur setzen, wenn vorhanden'-Muster wie oben.
+			if (pkg.capabilities && pkg.capabilities.length > 0) item.capabilities = pkg.capabilities;
 			return item;
 		});
 }

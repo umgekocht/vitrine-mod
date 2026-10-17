@@ -33,6 +33,11 @@ public final class CatalogTestSupportBridge {
 		return CatalogTestSupport.VALID_REGISTRY_PACKAGE_JSON_JAVAMOD;
 	}
 
+	/** Siehe {@link CatalogTestSupport#VALID_REGISTRY_PACKAGE_JSON_WITH_CAPABILITIES} (GATE90-FOLLOW). */
+	public static String validRegistryPackageJsonWithCapabilities() {
+		return CatalogTestSupport.VALID_REGISTRY_PACKAGE_JSON_WITH_CAPABILITIES;
+	}
+
 	/**
 	 * Ein {@link RegistryPackageClient}, der {@code packages/&lt;id&gt;.json}
 	 * ueber {@code file://} aus {@code packagesDir} liest -- fuer Tests ohne

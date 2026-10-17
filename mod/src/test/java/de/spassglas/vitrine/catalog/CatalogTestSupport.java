@@ -207,6 +207,44 @@ final class CatalogTestSupport {
 			""".formatted("a".repeat(64), "A".repeat(44));
 
 	/**
+	 * GATE90-FOLLOW: wie {@link #VALID_REGISTRY_PACKAGE_JSON}, zusaetzlich mit
+	 * dem optionalen Paket-Feld {@code capabilities} (registry-package.schema.json,
+	 * Beispiel aus {@code registry/packages/spassglas.kompakt-hud.json}) --
+	 * fuer den Nachweis, dass {@link CatalogPackageDetailSource} echte,
+	 * vor dem Download bekannte Faehigkeiten durchreicht ({@code
+	 * capabilitiesKnown=true}, GATE90).
+	 */
+	static final String VALID_REGISTRY_PACKAGE_JSON_WITH_CAPABILITIES = """
+			{
+			  "schemaVersion": 1,
+			  "id": "spassglas.kompakt-hud",
+			  "name": "Kompakt-HUD",
+			  "category": "hud",
+			  "author": {
+			    "name": "Spassglas",
+			    "url": "https://github.com/spassglas"
+			  },
+			  "description": "Platzsparendes HUD-Layout.",
+			  "homepage": "https://github.com/spassglas/vitrine-packs-starter",
+			  "license": "CC-BY-4.0",
+			  "repository": "https://github.com/spassglas/vitrine-packs-starter",
+			  "capabilities": ["hud"],
+			  "versions": [
+			    {
+			      "version": "1.0.0",
+			      "vpkgUrl": "https://github.com/spassglas/vitrine-packs-starter/releases/download/kompakt-hud-v1.0.0/kompakt-hud.vpkg",
+			      "sha256": "%s",
+			      "signature": "%s",
+			      "size": 20480,
+			      "publishedAt": "2026-08-25T09:00:00Z"
+			    }
+			  ],
+			  "latestVersion": "1.0.0",
+			  "updatedAt": "2026-08-25T09:00:00Z"
+			}
+			""".formatted("a".repeat(64), "A".repeat(44));
+
+	/**
 	 * GATE77: ein schema-gueltiger Klasse-B-Registry-Paketeintrag
 	 * ({@code contentClass: "javamod"}) mit genau einer {@code .jar}-Version
 	 * -- fuer den Nachweis, dass {@link CatalogPackageDetailSource} ein

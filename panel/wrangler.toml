@@ -1,0 +1,39 @@
+name = "vitrine-panel"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vitrine-panel"
+# After `wrangler d1 create vitrine-panel`, paste the printed id here.
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "vitrine-panel-uploads"
+
+[vars]
+# Public base URL of this panel, e.g. https://vitrine-panel.<account>.workers.dev
+PUBLIC_URL = "http://localhost:8787"
+# Repository that holds the catalog entries (packages/<id>.json).
+REGISTRY_REPO = "umgekocht/vitrine-registry"
+# Public repository whose GitHub releases host approved .vpkg files.
+UPLOADS_REPO = "umgekocht/vitrine-uploads"
+# Cloudflare Turnstile site key (public). The value below is Cloudflare's test key
+# that always passes -- replace it with your own key before going live.
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+
+# Secrets (set with `wrangler secret put <NAME>`, never commit them):
+#   GOOGLE_CLIENT_ID       OAuth client id from Google Cloud Console
+#   GOOGLE_CLIENT_SECRET   OAuth client secret
+#   MODERATOR_EMAILS       comma separated whitelist, e.g. "umgekocht@users.noreply.github.com,umgekocht@users.noreply.github.com"
+#   REGISTRY_SIGNING_KEY   Ed25519 private key (PKCS8 PEM) of the registry
+#   TURNSTILE_SECRET       Turnstile secret key (Cloudflare dashboard -> Turnstile)
+#   GATE_SECRET            32+ random characters, signs the "human" pass cookie
+#   GITHUB_TOKEN           fine-grained token: Contents read/write on REGISTRY_REPO and UPLOADS_REPO only

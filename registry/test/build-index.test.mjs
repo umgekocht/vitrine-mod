@@ -92,6 +92,14 @@ test("Builder erzeugt aus den 3 Beispielpaketen einen gueltigen, paginierten Ind
 		const others = page.content.packages.filter((p) => p.id !== "spassglas.steinbrocken-textur");
 		assert.ok(others.every((p) => p.minecraftVersions === undefined));
 
+		// GATE90-FOLLOW: 'capabilities' ist optional -- nur kompakt-hud traegt
+		// es in der Quelle (registry/packages/spassglas.kompakt-hud.json), die
+		// anderen beiden Fixtures bleiben ohne das Feld.
+		const kompaktHud = page.content.packages.find((p) => p.id === "spassglas.kompakt-hud");
+		assert.deepEqual(kompaktHud.capabilities, ["hud"]);
+		const othersWithoutCapabilities = page.content.packages.filter((p) => p.id !== "spassglas.kompakt-hud");
+		assert.ok(othersWithoutCapabilities.every((p) => p.capabilities === undefined));
+
 		const validator = new Validator(loadSchema("registry-index-page.schema.json"), "2020-12");
 		validateOrThrow(validator, page.content, "index/index.json");
 
@@ -106,6 +114,11 @@ test("Builder erzeugt aus den 3 Beispielpaketen einen gueltigen, paginierten Ind
 		assert.ok(result.search.entries.every((e) => e.keywords.length > 0));
 		// GATE101: siehe index/index.json oben, derselbe Grund.
 		assert.ok(result.search.entries.every((e) => e.license === "CC-BY-4.0"));
+		// GATE90-FOLLOW: siehe index/index.json oben, derselbe Grund.
+		const hudEntry = result.search.entries.find((e) => e.id === "spassglas.kompakt-hud");
+		assert.deepEqual(hudEntry.capabilities, ["hud"]);
+		const otherEntries = result.search.entries.filter((e) => e.id !== "spassglas.kompakt-hud");
+		assert.ok(otherEntries.every((e) => e.capabilities === undefined));
 
 		const onDisk = JSON.parse(readFileSync(path.join(outDir, "index", "v1", "search.json"), "utf8"));
 		assert.deepEqual(onDisk, result.search);
@@ -134,6 +147,10 @@ test("Builder erzeugt aus den 3 Beispielpaketen einen gueltigen, paginierten Ind
 		// 'featured' und 'popular' sind unabhaengig: steinbrocken-textur ist
 		// featured, aber nicht popular; mitternacht-theme ist beides.
 		assert.ok(!result.featured.popular.some((i) => i.id === "spassglas.steinbrocken-textur"));
+		// GATE90-FOLLOW: kompakt-hud ist 'popular' und traegt 'capabilities' in
+		// der Quelle -- siehe index/index.json oben, derselbe Grund.
+		const hudPopular = result.featured.popular.find((i) => i.id === "spassglas.kompakt-hud");
+		assert.deepEqual(hudPopular.capabilities, ["hud"]);
 	});
 });
 

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine Panel</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><img src="/icon.png" alt="" width="28" height="28"><span>Vitrine</span></a>
+  <nav id="tabs" class="tabs">
+    <button data-view="browse" class="tab">Browse</button>
+    <button data-view="suggestions" class="tab">Suggestions</button>
+    <button data-view="mine" class="tab">Upload</button>
+    <button data-view="queue" class="tab mod-only" hidden>Moderation</button>
+    <button data-view="catalog" class="tab mod-only" hidden>Catalog</button>
+    <button data-view="audit" class="tab mod-only" hidden>Log</button>
+  </nav>
+  <div id="account" class="account"></div>
+</header>
+
+<main id="app">
+  <section id="view-browse" class="view" hidden>
+    <div class="hero small">
+      <h1>Discover content for Vitrine</h1>
+      <p>Texture packs, themes, HUD modules, sounds, languages and add-ons. Install them in game with one click — press <strong>M</strong> to open the store.</p>
+    </div>
+    <div class="toolbar">
+      <input id="browse-search" class="search" type="search" placeholder="Search packages…" aria-label="Search packages">
+      <select id="browse-category" aria-label="Category">
+        <option value="">All categories</option>
+        <option value="texturen">Texture packs</option>
+        <option value="theme">Themes</option>
+        <option value="hud">HUD</option>
+        <option value="shader">Shaders</option>
+        <option value="sound">Sounds</option>
+        <option value="sprache">Languages</option>
+        <option value="addon">Add-ons</option>
+        <option value="cosmetics">Cosmetics</option>
+        <option value="bundle">Bundles</option>
+      </select>
+    </div>
+    <div id="browse-grid" class="grid"></div>
+  </section>
+
+  <section id="view-suggestions" class="view" hidden>
+    <div class="card">
+      <h2>Suggest something for Vitrine</h2>
+      <p class="muted">Ideas, bugs or content you would like to see. Vote for the ideas you like most.</p>
+      <div id="suggest-signin" hidden><a class="btn primary" href="/auth/login">Sign in with Google to post and vote</a></div>
+      <form id="nick-form" class="form inline" hidden>
+        <label>Choose a public nickname <input name="nickname" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" required></label>
+        <button class="btn primary" type="submit">Save</button>
+        <p id="nick-msg" class="msg" role="status"></p>
+      </form>
+      <form id="suggest-form" class="form" hidden>
+        <label>Type
+          <select name="kind">
+            <option value="feature">Feature idea</option>
+            <option value="bug">Bug report</option>
+            <option value="content">Content wish</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Title <input name="title" minlength="5" maxlength="120" required></label>
+        <label>Description <textarea name="body" minlength="10" maxlength="4000" rows="4" required></textarea></label>
+        <button class="btn primary" type="submit">Post suggestion</button>
+        <p id="suggest-msg" class="msg" role="status"></p>
+      </form>
+    </div>
+    <div class="pills" id="suggest-filter">
+      <button data-sort="top" class="pill active">Top</button>
+      <button data-sort="new" class="pill">New</button>
+      <button data-status="planned" class="pill">Planned</button>
+      <button data-status="done" class="pill">Done</button>
+    </div>
+    <div id="suggest-list" class="list"></div>
+  </section>
+
+  <section id="view-mine" class="view" hidden>
+    <div id="upload-signin" class="hero" hidden>
+      <h1>Share your creations with every Vitrine player</h1>
+      <p>Upload texture packs, themes, HUD modules, sounds, languages and Lua/JavaScript add-ons. Every upload is reviewed by a moderator before it appears in the in-game store.</p>
+      <a class="btn primary big" href="/auth/login">Sign in with Google</a>
+      <p class="fine">We only use your Google account to sign you in. Your e-mail address is never shown publicly.</p>
+    </div>
+    <div id="upload-area" class="view" hidden>
+      <div class="card">
+        <h2>Upload a package</h2>
+        <p class="muted">A <code>.vpkg</code> file with <code>vitrine.json</code> at its root (max. 10 MB). Build it with Vitrine Designer or <code>node cli/vitrine.js pack</code>. Java mods cannot be uploaded here.</p>
+        <form id="upload-form" class="form">
+          <label class="drop" id="drop">
+            <input type="file" name="file" accept=".vpkg,.zip" required>
+            <span id="drop-text">Choose a .vpkg file or drop it here</span>
+          </label>
+          <label>License
+            <select name="license" required>
+              <option value="">Choose…</option>
+              <option>CC0-1.0</option><option>CC-BY-4.0</option><option>CC-BY-SA-4.0</option>
+              <option>MIT</option><option>Apache-2.0</option><option>Unlicense</option>
+            </select>
+          </label>
+          <label>What's new (optional)
+            <textarea name="changelog" maxlength="2000" rows="3"></textarea>
+          </label>
+          <label class="check"><input type="checkbox" name="rights" required> I made this content myself or have the right to share it under this license.</label>
+          <button class="btn primary" type="submit">Submit for review</button>
+          <p id="upload-msg" class="msg" role="status"></p>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Your uploads</h2>
+        <div id="mine-list" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-queue" class="view" hidden>
+    <div class="pills" id="queue-filter">
+      <button data-status="pending" class="pill active">Pending</button>
+      <button data-status="approved" class="pill">Approved</button>
+      <button data-status="rejected" class="pill">Rejected</button>
+      <button data-status="removed" class="pill">Removed</button>
+      <button data-status="withdrawn" class="pill">Withdrawn</button>
+    </div>
+    <div id="queue-list" class="list"></div>
+  </section>
+
+  <section id="view-catalog" class="view" hidden>
+    <div class="card">
+      <h2>Published packages</h2>
+      <p class="muted">Removing a package takes it out of the catalog for everyone. Players who installed it keep their copy.</p>
+      <input id="catalog-search" class="search" type="search" placeholder="Filter…">
+      <div id="catalog-list" class="list"></div>
+    </div>
+  </section>
+
+  <section id="view-audit" class="view" hidden>
+    <div class="card">
+      <h2>Activity log</h2>
+      <div id="audit-list" class="list compact"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="reason-dialog">
+  <form method="dialog" class="form">
+    <h3 id="reason-title">Reason</h3>
+    <textarea id="reason-text" rows="4" maxlength="1000" required></textarea>
+    <div class="row end">
+      <button value="cancel" class="btn">Cancel</button>
+      <button value="ok" id="reason-ok" class="btn danger">Confirm</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="package-dialog" class="wide">
+  <div id="package-body"></div>
+  <form method="dialog" class="row end"><button class="btn">Close</button></form>
+</dialog>
+</body>
+</html>

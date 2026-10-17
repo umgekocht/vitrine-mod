@@ -106,6 +106,36 @@ public final class LangFilesTest {
 		}
 	}
 
+	/**
+	 * GATE91: der Diagnose-Bildschirm (ROADMAP X3) duerfte fuer eine Person
+	 * ohne Entwicklerhintergrund lesbar sein. "Reload" als woertliches
+	 * Fachwort (statt z. B. "Aktualisierung"/"refresh") und interne
+	 * Dateinamen wie "state.json" gehoeren nicht in sichtbaren Text --
+	 * das Konzept "neu laden" darf weiter gemeint sein, nur nicht so benannt.
+	 */
+	@Test
+	public void diagnosticsScreenTextsAvoidDeveloperJargon() throws IOException {
+		Pattern reloadAsWord = Pattern.compile("(?i)\\breload\\b");
+		Pattern internalFileName = Pattern.compile("(?i)state\\.json");
+
+		for (String locale : LOCALES) {
+			for (Map.Entry<String, String> entry : readLangFile(locale).entrySet()) {
+				String key = entry.getKey();
+				boolean isDiagnosticsText = key.startsWith("vitrine.diagnostics.")
+						|| key.startsWith("vitrine.settings.diagnostics")
+						|| key.startsWith("vitrine.settings2.diagnostics");
+				if (!isDiagnosticsText) {
+					continue;
+				}
+				String value = entry.getValue();
+				assertFalse(reloadAsWord.matcher(value).find(),
+						locale + ".json: Key '" + key + "' nennt das Entwicklerwort 'reload' woertlich: " + value);
+				assertFalse(internalFileName.matcher(value).find(),
+						locale + ".json: Key '" + key + "' nennt den internen Dateinamen 'state.json': " + value);
+			}
+		}
+	}
+
 	@Test
 	public void translationsHelperResolvesKnownKeyPerLocale() {
 		assertEquals(Translations.get("de_de", "vitrine.store.title"), "Vitrine");

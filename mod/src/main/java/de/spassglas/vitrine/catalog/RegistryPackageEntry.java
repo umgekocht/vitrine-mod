@@ -21,6 +21,12 @@ import java.util.Optional;
  *                           registry-package.schema.json, am Paket haengend --
  *                           nicht pro Version), oder leer, wenn das optionale
  *                           Feld im JSON fehlt (aeltere Eintraege)
+ * @param capabilities die vom Paket im Katalog angemeldeten Faehigkeits-
+ *                      Bezeichner (GATE90-FOLLOW, registry-package.schema.json),
+ *                      oder leer, wenn das optionale Feld im JSON fehlt
+ *                      (aeltere Eintraege) -- die endgueltige, bindende
+ *                      Pruefung bleibt in jedem Fall die echte vitrine.json
+ *                      nach dem Download (Charter-Regel 4)
  */
 public record RegistryPackageEntry(
 		String id,
@@ -38,7 +44,8 @@ public record RegistryPackageEntry(
 		String updatedAt,
 		String contentClass,
 		List<RegistryJavaModVersion> javaModVersions,
-		List<String> minecraftVersions) {
+		List<String> minecraftVersions,
+		List<String> capabilities) {
 
 	/** Klasse A -- ein {@code .vpkg}, ohne Neustart wirksam. Gilt auch, wenn das Feld fehlt. */
 	public static final String CONTENT_CLASS_RESOURCE = "resource";
@@ -52,6 +59,10 @@ public record RegistryPackageEntry(
 		// GATE70-FOLLOW2: aeltere Index-/Paketeintraege ohne 'minecraftVersions'
 		// bleiben gueltig -- leere Liste statt Nullpointer.
 		minecraftVersions = minecraftVersions == null ? List.of() : List.copyOf(minecraftVersions);
+		// GATE90-FOLLOW: dasselbe Muster wie 'minecraftVersions' -- aeltere
+		// Eintraege ohne 'capabilities' bleiben gueltig, leere Liste statt
+		// Nullpointer.
+		capabilities = capabilities == null ? List.of() : List.copyOf(capabilities);
 	}
 
 	/** GATE6: ob dieser Eintrag ein Klasse-B-Angebot (Java-Mod) ist. */
@@ -99,6 +110,15 @@ public record RegistryPackageEntry(
 		if (root.has("minecraftVersions") && root.get("minecraftVersions").isJsonArray()) {
 			for (JsonElement mcVersion : root.getAsJsonArray("minecraftVersions")) {
 				minecraftVersions.add(mcVersion.getAsString());
+			}
+		}
+		// GATE90-FOLLOW: 'capabilities' haengt ebenfalls am Paket
+		// (Dokumentebene), nicht an der Version -- dasselbe Muster wie
+		// 'minecraftVersions' oben.
+		List<String> capabilities = new ArrayList<>();
+		if (root.has("capabilities") && root.get("capabilities").isJsonArray()) {
+			for (JsonElement capability : root.getAsJsonArray("capabilities")) {
+				capabilities.add(capability.getAsString());
 			}
 		}
 		boolean javaMod = CONTENT_CLASS_JAVAMOD.equals(contentClass);
@@ -153,7 +173,8 @@ public record RegistryPackageEntry(
 				root.get("updatedAt").getAsString(),
 				contentClass,
 				javaModVersions,
-				minecraftVersions);
+				minecraftVersions,
+				capabilities);
 	}
 
 	private static String optionalString(JsonObject object, String field) {

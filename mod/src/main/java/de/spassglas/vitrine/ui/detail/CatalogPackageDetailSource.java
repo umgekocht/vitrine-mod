@@ -24,15 +24,20 @@ import java.util.Optional;
  *
  * <p>Holt den vollen Registry-Paketeintrag ({@code packages/&lt;id&gt;.json},
  * {@link RegistryPackageClient}) und baut daraus ein synthetisches {@link
- * Manifest} fuer die Anzeige. Zwei Felder sind dabei ehrlich leer, weil das
- * Registry-Schema sie (noch) nicht traegt: {@code capabilities} (erst nach dem
- * Download aus der echten {@code vitrine.json} bekannt, siehe {@link
- * de.spassglas.vitrine.pack.CatalogPackInstaller}) und {@code screenshots}
- * (liegen im {@code .vpkg} selbst). Fuer Screenshots zeigt die Detailseite
- * dafuer ihren regulaeren "keine Angaben"-Zustand. Faehigkeiten sind dagegen
- * nicht leer, sondern schlicht unbekannt (GATE76, Charter-Regel 2) -- deshalb
- * {@code capabilitiesKnown=false} beim Bauen des Modells, statt die leere
- * Liste als "fordert keine Faehigkeiten an" misszuverstehen.</p>
+ * Manifest} fuer die Anzeige. {@code screenshots} ist dabei ehrlich leer, weil
+ * das Registry-Schema das Feld nicht traegt (liegt im {@code .vpkg} selbst) --
+ * die Detailseite zeigt dafuer ihren regulaeren "keine Angaben"-Zustand.
+ * {@code capabilities} fuehrt die Registry seit GATE90-FOLLOW
+ * (registry-package.schema.json) tatsaechlich: nennt der Paketeintrag welche,
+ * uebernimmt dieses Modell sie 1:1 und meldet {@code capabilitiesKnown=true},
+ * damit {@link de.spassglas.vitrine.pack.CatalogPackInstaller} den
+ * Faehigkeiten-Dialog schon vor dem Download zeigen kann (docs/UI-SPEC.md
+ * Abschnitt 8). Fehlt das Feld (aeltere Eintraege), bleibt {@code
+ * capabilitiesKnown=false} -- dieselbe Unterscheidung "unbekannt" vs. "wirklich
+ * leer" wie schon fuer lokale Pakete (GATE76), nur eben jetzt auch fuer
+ * Katalog-Angebote erreichbar. Die endgueltige, bindende Pruefung bleibt in
+ * jedem Fall die echte {@code vitrine.json} nach dem Download
+ * (Charter-Regel 4).</p>
  */
 public final class CatalogPackageDetailSource {
 
@@ -75,18 +80,21 @@ public final class CatalogPackageDetailSource {
 		RegistryPackageEntry entry = result.value().orElseThrow();
 
 		Manifest manifest = new Manifest(1, entry.id(), entry.name(), entry.latestVersion(), entry.category(),
-				entry.authorName(), entry.description(), List.of(), null, List.of(), entry.homepage(),
+				entry.authorName(), entry.description(), entry.capabilities(), null, List.of(), entry.homepage(),
 				entry.license());
+		// GATE90-FOLLOW: nur eine Quelle, die den Registry-Eintrag tatsaechlich
+		// mit angemeldeten Faehigkeiten gelesen hat, darf capabilitiesKnown=true
+		// melden (dasselbe Muster wie GATE76 bei LocalPackageDetailSource) --
+		// fehlt das optionale 'capabilities'-Feld (aeltere Eintraege), bleibt die
+		// Liste leer und die Angabe ehrlich "unbekannt", statt eine
+		// faelschliche Verneinung zu zeigen.
+		boolean capabilitiesKnown = !entry.capabilities().isEmpty();
 
 		// GATE70: "repository" ist im Registry-Schema Pflicht (im Gegensatz zum
 		// optionalen Manifest-Feld "homepage") -- das Autoren-Repo fuer die
 		// GitHub-Kennzahlen im Kopf ist bei einem Katalog-Angebot also immer
 		// bekannt (muss aber trotzdem erst GitHubRepositoryReference.parse
 		// bestehen, z. B. echtes github.com, bevor ein Abruf stattfindet).
-		// GATE76: capabilitiesKnown=false -- registry-package.schema.json fuehrt
-		// kein capabilities-Feld, die leere Liste oben ist Verlegenheit, nicht
-		// Wissen. Die Detailseite zeigt deshalb "unbekannt, wird beim
-		// Installieren geprueft" statt der falschen Verneinung.
 		// GATE77: Klasse B (contentClass "javamod") hat kein 'versions[]' --
 		// die Versionsdaten stecken in 'javaModVersions[]'
 		// ($defs/javamodVersionItem). isJavaMod=true sorgt dafuer, dass die
@@ -102,7 +110,8 @@ public final class CatalogPackageDetailSource {
 			RegistryJavaModVersion version = latest.get();
 			return Optional.of(PackageDetailModel.of(manifest, status, PackageInstallPhase.IDLE, version.size(),
 					null, catalog == null ? List.of() : catalog, version.publishedAt(), version.sha256Hex(),
-					version.dependencies(), List.of(), entry.repository(), entry.minecraftVersions(), false, true));
+					version.dependencies(), List.of(), entry.repository(), entry.minecraftVersions(),
+					capabilitiesKnown, true));
 		}
 
 		// GATE69: publishedAt/sha256 stammen aus dem Registry-Versions-Eintrag
@@ -119,6 +128,6 @@ public final class CatalogPackageDetailSource {
 		RegistryPackageVersion version = latest.get();
 		return Optional.of(PackageDetailModel.of(manifest, status, PackageInstallPhase.IDLE, version.size(),
 				null, catalog == null ? List.of() : catalog, version.publishedAt(), version.sha256Hex(),
-				List.of(), List.of(), entry.repository(), entry.minecraftVersions(), false, false));
+				List.of(), List.of(), entry.repository(), entry.minecraftVersions(), capabilitiesKnown, false));
 	}
 }

@@ -6,6 +6,8 @@ import de.spassglas.vitrine.state.PackStateStore;
 import de.spassglas.vitrine.ui.carousel.HeroCarouselModel;
 import de.spassglas.vitrine.ui.carousel.HeroCarouselWidget;
 import de.spassglas.vitrine.ui.detail.HumanReadableSize;
+import de.spassglas.vitrine.ui.dialog.CancelDownloadConfirmModel;
+import de.spassglas.vitrine.ui.dialog.ConfirmCancelDownloadDialog;
 import de.spassglas.vitrine.ui.downloads.DownloadEntry;
 import de.spassglas.vitrine.ui.downloads.DownloadFlyoutModel;
 import de.spassglas.vitrine.ui.downloads.DownloadFlyoutService;
@@ -216,6 +218,20 @@ public final class StoreScreen extends Screen {
 	private StoreStateView catalogStateView;
 	private StoreStateView noResultsStateView;
 
+	/**
+	 * ROADMAP GATE88: {@code true}, sobald {@link #buildSearchContent()} fuer
+	 * die aktuell gewaehlte Nav-Rail-Kategorie irgendetwas Echtes gebaut hat
+	 * (Trefferliste, eigenes Zustands-Panel, Modrinth-Reihe, "Mods
+	 * aktivieren"-Knopf, Reiter-Leiste) -- unabhaengig davon, ob eine
+	 * einzelne dieser Teile gerade leer ist. Vorher prueften {@link
+	 * #renderContentPlaceholder} nur eine feste Liste von Feldern
+	 * (Katalog-/Start-Felder, nie fuer Kategorien gesetzt) und zeigte den
+	 * "folgt in einem spaeteren Update"-Text deshalb auch ueber echten Reitern
+	 * ("News"/"Mods" ohne Treffer-Zeile) -- obwohl diese Kategorien echten
+	 * Inhalt haben.
+	 */
+	private boolean categoryHasContent;
+
 	/** @param parentScreen der Bildschirm, zu dem "Zurueck"/ESC zurueckkehrt, oder {@code null} ohne Rueckkehr. */
 	public StoreScreen(Screen parentScreen) {
 		super(Text.translatable("vitrine.store.title"));
@@ -369,7 +385,14 @@ public final class StoreScreen extends Screen {
 
 	/** Ob der Inhaltsbereich Suchergebnisse zeigt: aktive Freitextsuche oder eine Kategorie-Auswahl der Nav-Rail. */
 	private boolean searchViewActive() {
-		return searchController.hasActiveSearch() || NavRailCategories.isCategory(selectedEntry);
+		// ROADMAP GATE88: "News" ist keine gefilterte Kachel-Kategorie
+		// (NavRailCategories.isCategory(NEWS) == false, kein TilePackageType
+		// dahinter), zeigt aber trotzdem echten Inhalt (Modrinth-Reihe,
+		// buildModrinthRow) -- ohne diesen Zusatz blieb buildSearchContent()
+		// fuer "News" ohne aktive Textsuche frueher unerreichbar und der
+		// generische "folgt spaeter"-Platzhaltertext erschien ueber echtem Inhalt.
+		return searchController.hasActiveSearch() || NavRailCategories.isCategory(selectedEntry)
+				|| selectedEntry == NavRailEntry.NEWS;
 	}
 
 	/**
@@ -383,6 +406,7 @@ public final class StoreScreen extends Screen {
 		sortButton = null;
 		restartFreeButton = null;
 		noResultsStateView = null;
+		categoryHasContent = false;
 		if (!searchViewActive() || navController.isOverlayOpen()) {
 			searchResults = List.of();
 			return;
@@ -398,15 +422,22 @@ public final class StoreScreen extends Screen {
 		}
 
 		if (searchController.hasActiveSearch()) {
+			// ROADMAP GATE88: eine aktive Textsuche hat immer ihre eigene,
+			// zutreffende Darstellung (Treffer oder "keine Treffer fuer ...") --
+			// nie den generischen "folgt spaeter"-Platzhaltertext.
+			categoryHasContent = true;
 			buildSearchResultsPage(x, y, rowWidth);
 			return;
 		}
 		if (selectedEntry == NavRailEntry.NEWS && !searchController.hasActiveSearch()) {
-			buildModrinthRow(x, y, rowWidth, javaModsAllowed() ? "news_mods" : "news");
+			categoryHasContent = buildModrinthRow(x, y, rowWidth, javaModsAllowed() ? "news_mods" : "news");
 			return;
 		}
 		if (selectedEntry == NavRailEntry.MODS && !searchController.hasActiveSearch()) {
-			// Bereich "Modrinth": Reiter als Pillen wie die Filter der Suche
+			// Bereich "Modrinth": Reiter als Pillen wie die Filter der Suche --
+			// die Reiter-Leiste selbst ist immer echter Inhalt, unabhaengig davon,
+			// ob der aktuell gewaehlte Reiter gerade 0 Treffer hat.
+			categoryHasContent = true;
 			this.addDrawableChild(new de.spassglas.vitrine.ui.home.PillTabsWidget(x, y, rowWidth, this.textRenderer,
 					List.of("resourcepack", "shader", "mod", "datapack"), t -> Text.translatable("vitrine.modrinth.tab." + t),
 					modrinthType, t -> {
@@ -418,6 +449,11 @@ public final class StoreScreen extends Screen {
 			return;
 		}
 
+		// ROADMAP GATE88: ab hier baut jede verbleibende Kategorie mindestens
+		// die Sortier-/Filterleiste plus entweder echte Treffer oder ihr
+		// eigenes "keine Treffer"-Panel (unten) -- beides ist echter Inhalt,
+		// nie der generische Platzhaltertext.
+		categoryHasContent = true;
 		sortButton = ButtonWidget.builder(sortButtonLabel(), button -> {
 					searchController.cycleSort();
 					rebuild();
@@ -475,7 +511,7 @@ public final class StoreScreen extends Screen {
 	 * Texturen-Bereich, Fabric-Mods im Mods-Bereich. Laedt im Hintergrund;
 	 * Mods nur mit dem Opt-in "Java-Mods anzeigen" (Klasse B, Neustart noetig).
 	 */
-	private void buildModrinthRow(int x, int y, int rowWidth, String type) {
+	private boolean buildModrinthRow(int x, int y, int rowWidth, String type) {
 		boolean mod = "mod".equals(type);
 		Path configDir = FabricLoader.getInstance().getConfigDir().resolve(Vitrine.MOD_ID);
 		if (mod && !SettingsModel.showJavaModOffers(configDir)) {
@@ -484,7 +520,7 @@ public final class StoreScreen extends Screen {
 					.dimensions(x, y, Math.min(rowWidth, VitrineTheme.DETAIL_ACTION_BUTTON_WIDTH * 4), VitrineTheme.MENU_BUTTON_HEIGHT)
 					.build();
 			this.addDrawableChild(enable);
-			return;
+			return true;
 		}
 		var mc = this.client;
 		List<de.spassglas.vitrine.modrinth.ModrinthClient.Hit> hits = de.spassglas.vitrine.modrinth.ModrinthCatalog.get(
@@ -498,7 +534,9 @@ public final class StoreScreen extends Screen {
 					}
 				});
 		if (hits.isEmpty()) {
-			return;
+			// ROADMAP GATE88: genuinely 0 Eintraege gerade jetzt -- kein Fehler,
+			// der Aufrufer zeigt in diesem Fall den ehrlichen "folgt spaeter"-Text.
+			return false;
 		}
 		// Senkrechte Liste mit echten Projekt-Icons (umgekocht, 2026-10-06).
 		Text heading = Text.translatable("vitrine.modrinth.row.title");
@@ -536,6 +574,7 @@ public final class StoreScreen extends Screen {
 					}));
 			ly += de.spassglas.vitrine.ui.widget.ModrinthListEntryWidget.HEIGHT + VitrineTheme.SPACE_UNIT * 2;
 		}
+		return true;
 	}
 
 	private Text sortButtonLabel() {
@@ -1511,11 +1550,18 @@ public final class StoreScreen extends Screen {
 		// darunterliegende Kachel trifft.
 		if (downloadsFlyoutOpen && !navController.isOverlayOpen()) {
 			int row = flyoutRowAt(mouseX, mouseY);
-			if (row >= 0) {
+			// ROADMAP GATE86: nicht mehr die ganze Zeile ist Trefferflaeche zum
+			// Abbrechen, nur noch das Wort "Abbrechen" selbst (plus kleiner
+			// Innenabstand aus VitrineTheme#SPACE_UNIT) -- und ein Klick darauf
+			// fragt erst nach, statt sofort abzubrechen.
+			if (row >= 0 && onCancelLabel(row, mouseX, mouseY)) {
 				DownloadEntry entry = downloadFlyoutModel.allRows().get(row);
-				downloadFlyoutModel.cancel(entry.packId());
-				Vitrine.LOGGER.info("Store: Download-Flyout -- Abbrechen/Schliessen fuer '{}'.", entry.packId());
-				rebuild();
+				openCancelDownloadConfirm(entry);
+				return true;
+			}
+			if (row >= 0) {
+				// Treffer in der Zeile, aber nicht auf "Abbrechen" -- bleibt wirkungslos,
+				// schluckt den Klick aber, damit er nicht eine Kachel darunter trifft.
 				return true;
 			}
 			boolean onButton = downloadsButton != null && downloadsButton.isMouseOver(mouseX, mouseY);
@@ -1789,6 +1835,57 @@ public final class StoreScreen extends Screen {
 	}
 
 	/**
+	 * ROADMAP GATE86: Trefferflaeche des Wortes "Abbrechen" einer
+	 * Download-Flyout-Zeile -- bewusst nur das Wort plus ein kleiner
+	 * Innenabstand aus {@link VitrineTheme#SPACE_UNIT}, nicht die ganze Zeile
+	 * (vorher {@code flyoutRowAt} allein). Statisch und ohne {@code
+	 * textRenderer}-Abhaengigkeit, damit sich die Geometrie ohne laufenden
+	 * Client testen laesst -- {@code cancelWidth} kommt von der aufrufenden
+	 * Stelle (wo der {@code textRenderer} bereits vorhanden ist), analog zu
+	 * {@code renderDownloadRow}s eigener Breitenberechnung.
+	 *
+	 * @return {x, y, width, height} der Trefferflaeche
+	 */
+	static int[] cancelLabelRect(int rowTop, int rowRight, int cancelTextWidth) {
+		int pad = VitrineTheme.SPACE_UNIT;
+		int line2Y = rowTop + VitrineTheme.SPACE_UNIT + VitrineTheme.TYPE_BODY + VitrineTheme.SPACE_UNIT / 2;
+		return new int[] {rowRight - cancelTextWidth - pad, line2Y - pad,
+				cancelTextWidth + pad * 2, VitrineTheme.TYPE_CAPTION + pad * 2};
+	}
+
+	/** Liegt {@code (x, y)} innerhalb des Rechtecks {@code rect} ({x, y, width, height})? */
+	static boolean pointInsideRect(double x, double y, int[] rect) {
+		return x >= rect[0] && x < rect[0] + rect[2] && y >= rect[1] && y < rect[1] + rect[3];
+	}
+
+	/** Liegt der Klick auf dem Wort "Abbrechen" der Flyout-Zeile {@code row}? */
+	private boolean onCancelLabel(int row, double mouseX, double mouseY) {
+		int rowTop = flyoutRowsTop() + row * VitrineTheme.FLYOUT_ROW_HEIGHT;
+		int rowRight = flyoutLeft() + VitrineTheme.FLYOUT_WIDTH - flyoutPad();
+		String cancelText = Text.translatable("vitrine.downloads.cancel").getString();
+		int cancelWidth = ScaledText.width(this.textRenderer, cancelText, VitrineTheme.TYPE_CAPTION);
+		return pointInsideRect(mouseX, mouseY, cancelLabelRect(rowTop, rowRight, cancelWidth));
+	}
+
+	/**
+	 * ROADMAP GATE86: oeffnet die Rueckfrage statt sofort abzubrechen. Erst
+	 * ein ausdruecklicher Klick auf "Abbrechen" im Dialog ruft
+	 * {@code downloadFlyoutModel.cancel(...)} auf.
+	 */
+	private void openCancelDownloadConfirm(DownloadEntry entry) {
+		CancelDownloadConfirmModel confirmation = new CancelDownloadConfirmModel(entry.packId(), entry.displayName(),
+				() -> {
+					downloadFlyoutModel.cancel(entry.packId());
+					Vitrine.LOGGER.info("Store: Download-Flyout -- Abbrechen/Schliessen fuer '{}' nach Rueckfrage bestaetigt.",
+							entry.packId());
+				});
+		downloadsFlyoutOpen = false;
+		if (this.client != null) {
+			this.client.setScreen(new ConfirmCancelDownloadDialog(this, confirmation));
+		}
+	}
+
+	/**
 	 * Zeichnet das Download-Flyout (docs/UI-SPEC.md "1. Kopfleiste": "laufende
 	 * und zuletzt abgeschlossene Installationen, je mit Fortschrittsbalken,
 	 * Groesse und Abbrechen"). Direkt in {@link #render} gezeichnet -- wie das
@@ -1981,17 +2078,31 @@ public final class StoreScreen extends Screen {
 				this.width - contentX - VitrineTheme.SPACE_PAGE * 2);
 	}
 
-	private void renderContentPlaceholder(DrawContext context, int contentX) {
-		if (selectedEntry == NavRailEntry.START || heroCarousel != null || startRow != null || catalogStateView != null || noResultsStateView != null
-				|| searchRow != null || sortButton != null) {
-			// START/Suche zeigen echte Kacheln oder ein Zustands-Panel -- kein "kommt spaeter"-Text.
-			return;
+	/**
+	 * ROADMAP GATE88: reine, client-freie Entscheidung hinter {@link
+	 * #renderContentPlaceholder} -- {@code categoryHasContent} kommt aus
+	 * {@link #buildSearchContent()} (dort die eine Wahrheit, was fuer die
+	 * aktuelle Nav-Rail-Auswahl tatsaechlich gebaut wurde). "Start" hat seine
+	 * eigene Darstellung (Hero-Karussell/Kachelreihen/Zustands-Panel) und
+	 * zeigt diesen Platzhalter nie; eine offene Nav-Rail-Ueberlagerung laesst
+	 * den Inhaltsbereich bewusst leer.
+	 */
+	static boolean showsRoadmapPlaceholder(NavRailEntry selectedEntry, boolean overlayOpen, boolean categoryHasContent) {
+		if (selectedEntry == NavRailEntry.START || categoryHasContent) {
+			return false;
 		}
-		if (navController.isOverlayOpen() || searchViewActive()) {
-			// Offenes Menue: der Inhalt ist absichtlich leer (wird nach dem
-			// Schliessen aufgebaut). Kategorien sind gebaut (gefilterte Kacheln) --
-			// "kommt in einem spaeteren Update" waere hier schlicht falsch. Im
-			// Spiel gefunden (2026-10-06): der Satz lag quer ueber dem Menue.
+		return !overlayOpen;
+	}
+
+	private void renderContentPlaceholder(DrawContext context, int contentX) {
+		// ROADMAP GATE88: der Platzhaltertext "<Kategorie>-Inhalte folgen in
+		// einem spaeteren Update" darf nur fuer Kategorien erscheinen, die
+		// gerade tatsaechlich 0 Eintraege haben -- {@link #categoryHasContent}
+		// ist die eine Wahrheit darueber, von {@link #buildSearchContent()}
+		// gesetzt (vorher pruefte diese Stelle nur eine feste Liste von
+		// Katalog-/Start-Feldern, die fuer "News" nie gesetzt wurden, obwohl
+		// "News" echten Modrinth-Inhalt zeigt).
+		if (!showsRoadmapPlaceholder(selectedEntry, navController.isOverlayOpen(), categoryHasContent)) {
 			return;
 		}
 		int centerX = contentX + (this.width - contentX) / 2;

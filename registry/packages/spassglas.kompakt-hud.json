@@ -13,6 +13,9 @@
     "koordinaten",
     "kompakt"
   ],
+  "capabilities": [
+    "hud"
+  ],
   "icon": "https://raw.githubusercontent.com/umgekocht/vitrine-packs-starter/main/kompakt-hud/icon.png",
   "homepage": "https://github.com/umgekocht/vitrine-packs-starter",
   "license": "CC-BY-4.0",

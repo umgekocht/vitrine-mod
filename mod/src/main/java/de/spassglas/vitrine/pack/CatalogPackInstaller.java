@@ -197,6 +197,59 @@ public final class CatalogPackInstaller {
 	}
 
 	/**
+	 * ROADMAP GATE90: wie {@link #install(String, DownloadRequest, String)},
+	 * aber mit einer vom Aufrufer <em>vor</em> dem Download bereits bekannten
+	 * Faehigkeitsmenge ({@code knownCapabilityIds}) -- fehlt dafuer die
+	 * Zustimmung, wirft dieser Pfad {@link CatalogConsentRequiredException}
+	 * <b>bevor</b> {@link #downloader} ueberhaupt angefasst wird, also bevor
+	 * irgendein Byte uebers Netz geht (docs/UI-SPEC.md "8. Faehigkeiten-Dialog":
+	 * "Erscheint vor der ersten Installation eines Pakets").
+	 *
+	 * <p>Heute liefert jeder Produktions-Aufrufer ({@code
+	 * CatalogPackageDetailSource}) eine leere Liste, weil {@code
+	 * registry-package.schema.json} kein {@code capabilities}-Feld fuehrt --
+	 * die echten Faehigkeiten eines Katalog-Angebots sind dort erst nach dem
+	 * Download bekannt (siehe {@link #install(String, DownloadRequest, String,
+	 * CancellationToken, DownloadProgress)}, der danach weiterhin als
+	 * zweites, bindendes Sicherheitsnetz laeuft -- Charter-Regel 4 gilt fuer
+	 * die <em>tatsaechlich</em> im Manifest angemeldeten Faehigkeiten, nicht
+	 * nur fuer die hier vorab bekannten). Eine leere Liste ueberspringt diese
+	 * Vorab-Pruefung also folgenlos; sobald eine spaetere Registry-Erweiterung
+	 * echte Vorab-Daten liefert, greift dieser Pfad ohne weitere Aenderung.</p>
+	 */
+	public List<String> install(String expectedManifestId, DownloadRequest request, String sourceHost,
+			List<String> knownCapabilityIds, CancellationToken cancellationToken, DownloadProgress progress)
+			throws PackInstallException {
+		Objects.requireNonNull(knownCapabilityIds, "knownCapabilityIds");
+		requireConsentForKnownCapabilities(expectedManifestId, knownCapabilityIds);
+		return install(expectedManifestId, request, sourceHost, cancellationToken, progress);
+	}
+
+	/** Wie {@link #install(String, DownloadRequest, String, List, CancellationToken, DownloadProgress)}, mit Standard-Token/-Fortschritt. */
+	public List<String> install(String expectedManifestId, DownloadRequest request, String sourceHost,
+			List<String> knownCapabilityIds) throws PackInstallException {
+		return install(expectedManifestId, request, sourceHost, knownCapabilityIds, new CancellationToken(), null);
+	}
+
+	/**
+	 * GATE90: die eigentliche Vorab-Pruefung hinter den beiden Ueberladungen
+	 * oben -- komplett ohne Download-Zugriff, rein gegen {@code state.json}.
+	 */
+	private void requireConsentForKnownCapabilities(String expectedManifestId, List<String> knownCapabilityIds)
+			throws CatalogConsentRequiredException {
+		if (knownCapabilityIds.isEmpty()) {
+			return;
+		}
+		PackState state = PackStateStore.load(vitrineConfigDir);
+		if (!state.hasCapabilityConsent(expectedManifestId, knownCapabilityIds)) {
+			LOGGER.info("Katalog-Installation von '{}' angehalten, noch vor dem Download: bereits bekannte "
+					+ "Faehigkeiten {} sind noch nicht zugestimmt (Charter-Regel 4).", expectedManifestId,
+					knownCapabilityIds);
+			throw new CatalogConsentRequiredException(expectedManifestId, knownCapabilityIds);
+		}
+	}
+
+	/**
 	 * Haelt die Zustimmung des Nutzers zu {@code capabilityIds} fest und
 	 * installiert danach erneut (die {@code .vpkg} wird dafuer noch einmal
 	 * geladen -- {@link PackageDownloader} erkennt eine bereits verifiziert

@@ -63,7 +63,8 @@ public final class PackageDetailScreenRegistryErrorTest {
 				"solo.pack", "Solo", "texturen", "Autor", null, null, null, null, null,
 				"https://example.invalid/repo",
 				List.of(), // versions[]: absichtlich leer -- latestVersion passt zu keinem Eintrag
-				"9.9.9", "2024-01-01T00:00:00Z", RegistryPackageEntry.CONTENT_CLASS_RESOURCE, List.of(), List.of());
+				"9.9.9", "2024-01-01T00:00:00Z", RegistryPackageEntry.CONTENT_CLASS_RESOURCE, List.of(), List.of(),
+				List.of());
 		assertTrue(entry.latestVersionEntry().isEmpty(), "Testaufbau: latestVersion darf hier zu keinem Eintrag passen");
 
 		CatalogResult<RegistryPackageEntry> online = CatalogResult.online(entry);

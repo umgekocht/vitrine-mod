@@ -160,6 +160,35 @@ public final class CatalogPackageDetailSourceTest {
 		assertEquals(model.header().minecraftVersions().orElseThrow(), "1.21.1, 1.21.4");
 	}
 
+	/**
+	 * GATE90-FOLLOW: ein Registry-Paketeintrag mit dem (jetzt vorhandenen)
+	 * optionalen Feld {@code capabilities} liefert ein {@link
+	 * PackageDetailModel}, das diese Faehigkeiten schon VOR dem Download
+	 * kennt ({@code capabilitiesKnown=true}) -- genau die Luecke, die
+	 * {@link CatalogPackInstaller#install(String,
+	 * de.spassglas.vitrine.catalog.download.DownloadRequest, String, List,
+	 * de.spassglas.vitrine.catalog.download.CancellationToken,
+	 * de.spassglas.vitrine.catalog.download.DownloadProgress)} (GATE90)
+	 * voraussetzt, um den Faehigkeiten-Dialog vor jedem Netzzugriff zu
+	 * zeigen.
+	 */
+	@Test
+	public void loadsCapabilitiesFromTheFullRegistryPackageEntryWhenPresent() throws IOException {
+		Files.writeString(packagesDir.resolve("spassglas.kompakt-hud.json"),
+				CatalogTestSupportBridge.validRegistryPackageJsonWithCapabilities(), StandardCharsets.UTF_8);
+
+		Optional<PackageDetailModel> loaded = CatalogPackageDetailSource
+				.forTesting(CatalogTestSupportBridge.fileRegistryPackageClient(packagesDir))
+				.load("spassglas.kompakt-hud", TileStatus.NONE, List.of());
+
+		PackageDetailModel model = loaded.orElseThrow();
+		assertTrue(model.capabilitiesKnown(),
+				"registry-package.schema.json fuehrt seit GATE90-FOLLOW ein capabilities-Feld -- ist es gesetzt, "
+						+ "ist die Liste echtes Wissen, nicht Verlegenheit");
+		assertEquals(model.capabilities().size(), 1);
+		assertEquals(model.capabilities().get(0).id(), "hud");
+	}
+
 	@Test
 	public void unknownPackageIdYieldsEmpty() throws IOException {
 		Optional<PackageDetailModel> loaded = CatalogPackageDetailSource

@@ -1,0 +1,21 @@
+{
+  "name": "vitrine-panel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Upload and moderation panel for the Vitrine catalog (Cloudflare Workers + D1 + R2).",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute vitrine-panel --remote --file=schema.sql",
+    "db:init:local": "wrangler d1 execute vitrine-panel --local --file=schema.sql",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261012.1": true
+  }
+}

@@ -7,6 +7,7 @@ import de.spassglas.vitrine.ui.theme.VitrineTheme;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -14,6 +15,7 @@ import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -97,6 +99,17 @@ public final class TileRowWidget extends ClickableWidget {
 	 * sichtbaren Fokusrahmen und ist das Ziel von Enter/Leertaste.
 	 */
 	private int focusedTileIndex = -1;
+
+	/**
+	 * ROADMAP GATE74 (docs/UI-SPEC.md:112-114): Rechtsklick auf eine Kachel
+	 * oeffnet ein kleines Menue (Installieren, Details, Autor, Melden). Die
+	 * Kachel, fuer die das Menue gerade offen ist ({@code null} = geschlossen),
+	 * plus die vier gezeichneten Eintraege und die geklemmte Fensterposition.
+	 */
+	private TileData contextMenuTile;
+	private List<TileContextMenuEntry> contextMenuEntries = List.of();
+	private int contextMenuX;
+	private int contextMenuY;
 
 	public TileRowWidget(int x, int y, int width, List<TileData> tiles, TextRenderer textRenderer,
 			String titleKey, String subtitleKey) {
@@ -249,6 +262,9 @@ public final class TileRowWidget extends ClickableWidget {
 			hoveredTileId = nextHoveredId;
 			hoverStartMs = Util.getMeasuringTimeMs();
 		}
+		// ROADMAP GATE87: Hover ueber dem "Neustart noetig"-Statuszeichen zeigt
+		// eine Klartext-Erklaerung statt nur das Icon stumm zu lassen.
+		this.setTooltip(restartTooltipAt(mouseX, mouseY).map(Tooltip::of).orElse(null));
 		context.disableScissor();
 
 		// ROADMAP S9: sichtbarer Fokusrahmen um die per Pfeiltaste gewaehlte
@@ -259,6 +275,7 @@ public final class TileRowWidget extends ClickableWidget {
 		}
 
 		renderChevrons(context);
+		renderContextMenu(context, mouseX, mouseY);
 	}
 
 	private int liftFor(TileData tile, boolean tileHovered) {
@@ -368,13 +385,23 @@ public final class TileRowWidget extends ClickableWidget {
 			return;
 		}
 		String icon = tile.status().iconPath().orElseThrow();
-		int size = VitrineTheme.STATUS_ICON_DRAW_SIZE;
-		int sx = cardRight - VitrineTheme.CARD_BADGE_INSET - size;
-		int sy = imageBottom - VitrineTheme.CARD_BADGE_INSET - size;
+		int[] r = statusIconRect(cardRight, imageBottom);
 		de.spassglas.vitrine.ui.theme.GuiBlend.on();
-		context.drawTexture(Identifier.of("vitrine", icon), sx, sy, size, size, 0.0F, 0.0F,
+		context.drawTexture(Identifier.of("vitrine", icon), r[0], r[1], r[2], r[3], 0.0F, 0.0F,
 				VitrineTheme.STATUS_ICON_SOURCE_SIZE, VitrineTheme.STATUS_ICON_SOURCE_SIZE,
 				VitrineTheme.STATUS_ICON_SOURCE_SIZE, VitrineTheme.STATUS_ICON_SOURCE_SIZE);
+	}
+
+	/** Lage des Statuszeichen-Icons unten rechts im Bild einer Kachel: x, y, Breite, Hoehe. */
+	private static int[] statusIconRect(int cardRight, int imageBottom) {
+		int size = VitrineTheme.STATUS_ICON_DRAW_SIZE;
+		return new int[] {cardRight - VitrineTheme.CARD_BADGE_INSET - size,
+				imageBottom - VitrineTheme.CARD_BADGE_INSET - size, size, size};
+	}
+
+	/** Liegt {@code (x, y)} innerhalb des Rechtecks {@code rect} ({x, y, width, height})? */
+	private static boolean pointInsideRect(double x, double y, int[] rect) {
+		return x >= rect[0] && x < rect[0] + rect[2] && y >= rect[1] && y < rect[1] + rect[3];
 	}
 
 	private void renderText(DrawContext context, TileData tile, int cardX, int imageBottom) {
@@ -468,6 +495,34 @@ public final class TileRowWidget extends ClickableWidget {
 		return null;
 	}
 
+	/**
+	 * ROADMAP GATE87: der Tooltip-Text, der bei {@code (mouseX, mouseY)}
+	 * erscheinen wuerde, oder leer, wenn der Punkt auf keinem "Neustart
+	 * noetig"-Statuszeichen liegt. Reine Geometrie, kein {@link DrawContext}
+	 * noetig -- {@link #renderWidget} ruft das genau hiermit auf, ein Test
+	 * kann es ohne laufenden Client direkt pruefen (Muster wie {@link
+	 * #onClick}/{@code tileAt}: dieselbe Ruhe-Lage ({@code
+	 * baseCardTop() - ELEVATION_REST}) wie jeder andere Trefferflaechen-Test
+	 * dieser Klasse, unabhaengig von der aktuellen Anheb-Animation).
+	 */
+	Optional<Text> restartTooltipAt(double mouseX, double mouseY) {
+		int step = VitrineTheme.CARD_WIDTH + VitrineTheme.SPACE_GUTTER;
+		int firstCardX = getX() - controller.offset();
+		int cardTop = baseCardTop() - VitrineTheme.ELEVATION_REST;
+		for (int i = 0; i < tiles.size(); i++) {
+			TileData tile = tiles.get(i);
+			if (tile.status() != TileStatus.RESTART_REQUIRED) {
+				continue;
+			}
+			int cardX = firstCardX + i * step;
+			int[] rect = statusIconRect(cardX + VitrineTheme.CARD_WIDTH, cardTop + imageHeight());
+			if (pointInsideRect(mouseX, mouseY, rect)) {
+				return Optional.of(Text.translatable("vitrine.tile.status.restart_required.tooltip"));
+			}
+		}
+		return Optional.empty();
+	}
+
 	/** Die erste mindestens teilweise sichtbare Kachel (fuer die Tastatur-Aktivierung). */
 	private TileData firstVisibleTile() {
 		int index = firstVisibleTileIndex();
@@ -529,6 +584,156 @@ public final class TileRowWidget extends ClickableWidget {
 			onTileActivated.accept(released);
 		}
 		pressedTileId = null;
+	}
+
+	/**
+	 * ROADMAP GATE74: Rechtsklick auf eine Kachel oeffnet das Menue aus
+	 * {@link TileContextMenu#entriesFor(TileData)}; waehrend es offen ist,
+	 * schliesst (und bei Treffer auf einen Eintrag: fuehrt aus) jeder weitere
+	 * Klick es -- wie jedes andere kleine Ausklappmenue im Store (vgl.
+	 * {@code AccountMenu}). Linksklicks ausserhalb eines offenen Menues laufen
+	 * unveraendert ueber {@link #onClick}/{@link #onDrag}/{@link #onRelease}.
+	 */
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (contextMenuTile != null) {
+			TileContextMenuAction action = contextMenuActionAt(mouseX, mouseY);
+			TileData tile = contextMenuTile;
+			closeContextMenu();
+			if (action != null) {
+				performContextMenuAction(action, tile);
+			}
+			return true;
+		}
+		if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+			TileData target = tileAt(mouseX, mouseY);
+			if (target != null) {
+				openContextMenu(target, mouseX, mouseY);
+				return true;
+			}
+			return false;
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	/** Breite/Hoehe des Rechtsklick-Menues -- wie der Menue-Knopf (docs/UI-SPEC.md nennt keine eigenen Masze dafuer). */
+	private static int contextMenuWidth() {
+		return VitrineTheme.MENU_BUTTON_WIDTH;
+	}
+
+	private static int contextMenuHeight(int entryCount) {
+		return VitrineTheme.EDGE_PADDING * 2 + entryCount * VitrineTheme.MENU_BUTTON_HEIGHT;
+	}
+
+	/** Oeffnet das Menue bei {@code (anchorX, anchorY)}, geklemmt auf die eigenen Widget-Grenzen. */
+	private void openContextMenu(TileData tile, double anchorX, double anchorY) {
+		List<TileContextMenuEntry> entries = TileContextMenu.entriesFor(tile);
+		int w = contextMenuWidth();
+		int h = contextMenuHeight(entries.size());
+		int x = (int) Math.round(Math.max(getX(), Math.min(anchorX, getRight() - w)));
+		int y = (int) Math.round(Math.max(getY(), Math.min(anchorY, getBottom() - h)));
+		this.contextMenuTile = tile;
+		this.contextMenuEntries = entries;
+		this.contextMenuX = x;
+		this.contextMenuY = y;
+	}
+
+	private void closeContextMenu() {
+		contextMenuTile = null;
+		contextMenuEntries = List.of();
+	}
+
+	/** Der Eintrag unter {@code (mouseX, mouseY)} im offenen Menue, oder {@code null}. */
+	private TileContextMenuAction contextMenuActionAt(double mouseX, double mouseY) {
+		int w = contextMenuWidth();
+		int itemY = contextMenuY + VitrineTheme.EDGE_PADDING;
+		for (TileContextMenuEntry entry : contextMenuEntries) {
+			if (mouseX >= contextMenuX && mouseX < contextMenuX + w
+					&& mouseY >= itemY && mouseY < itemY + VitrineTheme.MENU_BUTTON_HEIGHT) {
+				return entry.action();
+			}
+			itemY += VitrineTheme.MENU_BUTTON_HEIGHT;
+		}
+		return null;
+	}
+
+	/**
+	 * Fuehrt einen Menuepunkt aus. {@code INSTALL} laeuft ueber denselben Pfad
+	 * wie der "Holen"-Knopf, solange die Kachel noch nicht installiert ist --
+	 * sonst (die Beschriftung ist dann "Aktualisieren"/"Deinstallieren") ueber
+	 * die Detailseite, wo diese Aktionen tatsaechlich existieren.
+	 * {@code DETAILS}/{@code AUTHOR} oeffnen beide die Detailseite -- die
+	 * einzige bestehende Autorenansicht im Store (Kopf plus "Weitere Pakete
+	 * dieses Autors"). {@code REPORT} gibt es als Mechanismus noch nicht --
+	 * ein ehrlicher Hinweis statt einer vorgegaukelten Funktion.
+	 */
+	private void performContextMenuAction(TileContextMenuAction action, TileData tile) {
+		switch (action) {
+			case INSTALL -> {
+				if (tile.status() == TileStatus.NONE && onTileDownload != null) {
+					onTileDownload.accept(tile);
+				} else if (onTileActivated != null) {
+					onTileActivated.accept(tile);
+				}
+			}
+			case DETAILS, AUTHOR -> {
+				if (onTileActivated != null) {
+					onTileActivated.accept(tile);
+				}
+			}
+			case REPORT -> showReportUnavailableNotice();
+		}
+	}
+
+	/** ROADMAP GATE74: kein Melde-Mechanismus vorhanden -- ehrlicher Hinweis statt stiller Wirkungslosigkeit. */
+	private static void showReportUnavailableNotice() {
+		net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+		if (mc == null) {
+			return;
+		}
+		net.minecraft.client.toast.SystemToast.show(mc.getToastManager(),
+				net.minecraft.client.toast.SystemToast.Type.PERIODIC_NOTIFICATION,
+				Text.translatable("vitrine.tile.report.unavailable.title"),
+				Text.translatable("vitrine.tile.report.unavailable.description"));
+	}
+
+	private void renderContextMenu(DrawContext context, int mouseX, int mouseY) {
+		if (contextMenuTile == null) {
+			return;
+		}
+		int w = contextMenuWidth();
+		int h = contextMenuHeight(contextMenuEntries.size());
+		de.spassglas.vitrine.ui.theme.RoundedRect.fill(context, contextMenuX, contextMenuY, w, h,
+				VitrineTheme.RADIUS_CONTROL, ActiveThemeColors.surfaceSolid());
+		de.spassglas.vitrine.ui.theme.RoundedRect.border(context, contextMenuX, contextMenuY, w, h,
+				VitrineTheme.RADIUS_CONTROL, ActiveThemeColors.borderTranslucent());
+		int itemY = contextMenuY + VitrineTheme.EDGE_PADDING;
+		for (TileContextMenuEntry entry : contextMenuEntries) {
+			boolean over = mouseX >= contextMenuX && mouseX < contextMenuX + w
+					&& mouseY >= itemY && mouseY < itemY + VitrineTheme.MENU_BUTTON_HEIGHT;
+			if (over) {
+				de.spassglas.vitrine.ui.theme.RoundedRect.fill(context, contextMenuX + VitrineTheme.CARD_TEXT_LINE_GAP,
+						itemY, w - VitrineTheme.CARD_TEXT_LINE_GAP * 2, VitrineTheme.MENU_BUTTON_HEIGHT,
+						VitrineTheme.RADIUS_CONTROL, ActiveThemeColors.surfaceTranslucent());
+			}
+			Text label = entry.argument().isPresent()
+					? Text.translatable(entry.translationKey(), entry.argument().get())
+					: Text.translatable(entry.translationKey());
+			ScaledText.draw(context, textRenderer, label, contextMenuX + VitrineTheme.SPACE_UNIT * 3,
+					itemY + (VitrineTheme.MENU_BUTTON_HEIGHT - VitrineTheme.TYPE_BODY) / 2,
+					ActiveThemeColors.text(), VitrineTheme.TYPE_BODY);
+			itemY += VitrineTheme.MENU_BUTTON_HEIGHT;
+		}
+	}
+
+	/** Nur fuer Tests: die Kachel, fuer die das Rechtsklick-Menue gerade offen ist, oder {@code null}. */
+	TileData openContextMenuTile() {
+		return contextMenuTile;
+	}
+
+	/** Nur fuer Tests: die Eintraege des gerade offenen Rechtsklick-Menues, oder leer, wenn keines offen ist. */
+	List<TileContextMenuEntry> openContextMenuEntries() {
+		return contextMenuEntries;
 	}
 
 	@Override

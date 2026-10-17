@@ -205,3 +205,35 @@ test("ein Paket mit falsch gemustertem 'minecraftVersions'-Eintrag wird abgelehn
 	const result = validator.validate(data);
 	assert.equal(result.valid, false, "sollte ungueltig sein (kein 'v'-Praefix erlaubt)");
 });
+
+// GATE90-FOLLOW: 'capabilities' ist optional, dieselbe feste Whitelist wie
+// 'capabilities' in vitrine.schema.json bzw. VpkgCapability.java im Mod --
+// siehe registry-package.schema.json.
+test("ein Paket ohne 'capabilities' validiert weiterhin (optionales Feld)", () => {
+	const validator = new Validator(schema, "2020-12");
+	const data = validPackage();
+	assert.equal(data.capabilities, undefined);
+	const result = validator.validate(data);
+	assert.equal(result.valid, true, `sollte gueltig sein: ${JSON.stringify(result.errors, null, 2)}`);
+});
+
+test("ein Paket mit gueltigen 'capabilities' validiert", () => {
+	const validator = new Validator(schema, "2020-12");
+	const data = validPackage({ capabilities: ["hud", "verhalten"] });
+	const result = validator.validate(data);
+	assert.equal(result.valid, true, `sollte gueltig sein: ${JSON.stringify(result.errors, null, 2)}`);
+});
+
+test("ein Paket mit unbekanntem 'capabilities'-Eintrag wird abgelehnt (feste Whitelist)", () => {
+	const validator = new Validator(schema, "2020-12");
+	const data = validPackage({ capabilities: ["netzwerk"] });
+	const result = validator.validate(data);
+	assert.equal(result.valid, false, "sollte ungueltig sein ('netzwerk' ist keine bekannte Faehigkeit)");
+});
+
+test("ein Paket mit doppeltem 'capabilities'-Eintrag wird abgelehnt (uniqueItems)", () => {
+	const validator = new Validator(schema, "2020-12");
+	const data = validPackage({ capabilities: ["hud", "hud"] });
+	const result = validator.validate(data);
+	assert.equal(result.valid, false, "sollte ungueltig sein (keine Duplikate erlaubt)");
+});

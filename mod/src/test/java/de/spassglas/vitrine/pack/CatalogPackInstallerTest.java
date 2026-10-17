@@ -88,6 +88,18 @@ public final class CatalogPackInstallerTest {
 		return new CatalogPackInstaller(vitrineConfigDir, provider, hotApply, null, downloader, signingPublicKey);
 	}
 
+	/**
+	 * Wie {@link #installer(java.security.PublicKey)}, aber mit einem
+	 * {@link CountingDownloadTransport}, der jeden {@code open()}-Aufruf
+	 * mitzaehlt -- der Beweis fuer GATE90, dass vor dem Download gar nicht
+	 * erst ans Netz gegangen wird.
+	 */
+	private CatalogPackInstaller installerWithCountingTransport(java.security.PublicKey signingPublicKey,
+			CountingDownloadTransport transport) {
+		PackageDownloader downloader = PackageDownloader.forTesting(transport, ALLOW_ANY, signingPublicKey);
+		return new CatalogPackInstaller(vitrineConfigDir, provider, hotApply, null, downloader, signingPublicKey);
+	}
+
 	private DownloadRequest hostRelease(String fileName, byte[] packageBytes, KeyPair keyPair) throws IOException {
 		Path source = downloadRoot.resolve(fileName);
 		Files.write(source, packageBytes);
@@ -161,6 +173,73 @@ public final class CatalogPackInstallerTest {
 		PackState state = PackStateStore.load(vitrineConfigDir);
 		assertTrue(state.isInstalled(profileId));
 		assertTrue(state.hasCapabilityConsent("beispiel.faehigkeitspaket", List.of("texturen")));
+	}
+
+	/**
+	 * ROADMAP GATE90-Beweis: kennt der Aufrufer die angemeldeten Faehigkeiten
+	 * schon <em>vor</em> dem Download (im Gegensatz zum Normalfall oben, wo
+	 * sie erst danach aus der echten {@code vitrine.json} bekannt werden) und
+	 * fehlt dafuer die Zustimmung, darf {@link CatalogPackInstaller#install}
+	 * den {@link de.spassglas.vitrine.catalog.download.DownloadTransport}
+	 * ueberhaupt nicht anfassen -- weder fuer den Download selbst noch fuer
+	 * irgendeine Vorab-Anfrage. {@link CountingDownloadTransport} zaehlt jeden
+	 * {@code open()}-Aufruf mit; der Test treibt denselben Installer zweimal:
+	 * zuerst ohne Zustimmung (erwartet {@code 0} Aufrufe), danach nach einer
+	 * erteilten Zustimmung (erwartet {@code >0} Aufrufe) -- exakt die
+	 * Reihenfolge "Dialog/Entscheidung vor dem Netz-Transfer", die
+	 * docs/UI-SPEC.md "8. Faehigkeiten-Dialog" fuer Katalog-Pakete verlangt.
+	 */
+	@Test
+	public void knownCapabilitiesWithoutConsentBlockTheDownloadBeforeAnyNetworkCall() throws Exception {
+		KeyPair keyPair = VpkgFixtures.generateEd25519KeyPair();
+		byte[] bytes = VpkgFixtures.minimalValidPackageWithCapabilities("beispiel.vorabfaehigkeit", List.of("texturen"));
+		DownloadRequest request = hostRelease("vorab.vpkg", bytes, keyPair);
+
+		CountingDownloadTransport transport = new CountingDownloadTransport(new FileUriDownloadTransport());
+		CatalogPackInstaller installer = installerWithCountingTransport(keyPair.getPublic(), transport);
+
+		try {
+			installer.install("beispiel.vorabfaehigkeit", request, "example.invalid", List.of("texturen"));
+			throw new AssertionError("CatalogConsentRequiredException erwartet, aber keine Ausnahme geworfen");
+		} catch (CatalogConsentRequiredException e) {
+			assertEquals(e.capabilityIds(), List.of("texturen"));
+		}
+		assertEquals(transport.openCount(), 0,
+				"ohne Zustimmung zu einer bereits bekannten Faehigkeit darf kein Download-Aufruf passieren");
+		assertEquals(regularFileCount(packsDir), 0);
+
+		PackStateStore.update(vitrineConfigDir, state -> {
+			state.recordCapabilityConsent("beispiel.vorabfaehigkeit", List.of("texturen"));
+			return null;
+		});
+
+		installer.install("beispiel.vorabfaehigkeit", request, "example.invalid", List.of("texturen"));
+
+		assertTrue(transport.openCount() > 0,
+				"nach erteilter Zustimmung muss der eigentliche Download tatsaechlich stattfinden");
+		assertEquals(vpkgFileCount(packsDir), 1);
+	}
+
+	/** Zaehlt {@code open()}-Aufrufe und delegiert sonst unveraendert -- der Netz-Spion fuer GATE90. */
+	private static final class CountingDownloadTransport
+			implements de.spassglas.vitrine.catalog.download.DownloadTransport {
+		private final de.spassglas.vitrine.catalog.download.DownloadTransport delegate;
+		private int openCount;
+
+		CountingDownloadTransport(de.spassglas.vitrine.catalog.download.DownloadTransport delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public de.spassglas.vitrine.catalog.download.DownloadResponse open(java.net.URI uri, long resumeFromOffset)
+				throws IOException {
+			openCount++;
+			return delegate.open(uri, resumeFromOffset);
+		}
+
+		int openCount() {
+			return openCount;
+		}
 	}
 
 	// --- ROADMAP GATE4/GATE9: echter Fortschritts-Rueckruf + Abbruch ------

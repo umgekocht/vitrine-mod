@@ -71,7 +71,7 @@ public class RegistryJavaModStagingTest {
 	public void aKlasseAEntryIsNeverStagedAsJar() throws Exception {
 		RegistryPackageEntry klasseA = new RegistryPackageEntry("de.autor.theme", "Theme", "theme", "Autorin",
 				null, null, null, null, "MIT", "https://github.com/autor/theme", List.of(), "1.0.0",
-				"2026-10-03T00:00:00Z", null, List.of(), List.of());
+				"2026-10-03T00:00:00Z", null, List.of(), List.of(), List.of());
 		expectThrows(JavaModStagingException.class, () -> RegistryJavaModStaging.stage(klasseA, stager(), () -> true));
 		assertModsEmpty();
 	}
@@ -89,7 +89,8 @@ public class RegistryJavaModStagingTest {
 		RegistryPackageEntry entry = javaModEntry(trusted);
 		RegistryPackageEntry wrongLatest = new RegistryPackageEntry(entry.id(), entry.name(), entry.category(),
 				entry.authorName(), null, null, null, null, entry.license(), entry.repository(), List.of(),
-				"9.9.9", entry.updatedAt(), entry.contentClass(), entry.javaModVersions(), entry.minecraftVersions());
+				"9.9.9", entry.updatedAt(), entry.contentClass(), entry.javaModVersions(), entry.minecraftVersions(),
+				entry.capabilities());
 		JavaModStagingException e = expectThrows(JavaModStagingException.class,
 				() -> RegistryJavaModStaging.stage(wrongLatest, stager(), () -> true));
 		assertTrue(e.getMessage().contains("9.9.9"), e.getMessage());
@@ -116,7 +117,7 @@ public class RegistryJavaModStagingTest {
 				"cool-mod-1.0.0.jar", sha, signature, JAR.length, List.of(), "2026-10-03T00:00:00Z", null);
 		return new RegistryPackageEntry("de.autor.coolmod", "Cool Mod", "hud", "Autorin", null, null, null, null,
 				"MIT", "https://github.com/autor/cool-mod", List.of(), "1.0.0", "2026-10-03T00:00:00Z",
-				RegistryPackageEntry.CONTENT_CLASS_JAVAMOD, List.of(version), List.of());
+				RegistryPackageEntry.CONTENT_CLASS_JAVAMOD, List.of(version), List.of(), List.of());
 	}
 
 	private void assertModsEmpty() throws IOException {

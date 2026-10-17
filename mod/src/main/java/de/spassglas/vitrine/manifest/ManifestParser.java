@@ -41,7 +41,10 @@ public final class ManifestParser {
 			Pattern.compile("all rights reserved", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("alle rechte vorbehalten", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("^cc-by(-sa)?-nc", Pattern.CASE_INSENSITIVE),
-			Pattern.compile("nur f[uü]r vitrine", Pattern.CASE_INSENSITIVE),
+			// "fuer" ist die uebliche ASCII-Transliteration von "für" in
+			// deutschen Texten ohne Umlauttastatur -- ohne das "ue"-Glied
+			// wuerde z. B. "Nur fuer Vitrine" durchschluepfen.
+			Pattern.compile("nur f(?:u|ü|ue)r vitrine", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("only for vitrine", Pattern.CASE_INSENSITIVE),
 			Pattern.compile("proprietary", Pattern.CASE_INSENSITIVE));
 
